@@ -1,6 +1,7 @@
 # UnityMobileInput
 Unity Mobile Input Plugin for iOS and Android (Unity UI compatible)
 You can use default InputField UI component on iOS and Android `without additional field` above keyboard
+
 It's a hack for hiding mobile input box on Android
 
 > It's deep refactor and bug fix of UnityNativeEdit (https://github.com/kmbang/UnityNativeEdit)
