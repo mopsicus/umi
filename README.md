@@ -2,9 +2,13 @@
 Unity Mobile Input Plugin for iOS and Android (Unity UI compatible)
 You can use default InputField UI component on iOS and Android `without additional field` above keyboard
 
-It's a hack for hiding mobile input box on Android
-
 > It's deep refactor and bug fix of UnityNativeEdit (https://github.com/kmbang/UnityNativeEdit)
+
+## Features
+1. Native input field and keyboard on iOS and Android
+2. Hiding additional mobile input box (Android)
+3. Show "Done" button (iOS)
+4. Return button type: Default, Next, Done, Search 
 
 ## How to use
 1. Copy the files into your existing unity project asset folder
