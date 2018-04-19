@@ -279,10 +279,11 @@ namespace Mopsicus.Plugins.MobileInput {
         }
 
         /// <summary>
-        /// Handler on app focus
+        /// Handler on app pause
         /// </summary>
         private void OnApplicationPause (bool pauseStatus) {
             if (!pauseStatus) {
+                DisableFocus ();
                 if (_data != null)
                     OnData (_data);
                 else if (_error != null)
@@ -290,11 +291,21 @@ namespace Mopsicus.Plugins.MobileInput {
             }
         }
 
+        /// <summary>
+        /// Handler on app focus
+        /// </summary>
         void OnApplicationFocus (bool focusStatus) {
             if (!focusStatus) {
-                foreach (var item in _instance._inputs.Values) {
-                    item.Hide ();
-                }
+                DisableFocus ();
+            }
+        }
+
+        /// <summary>
+        /// Disable focus for all input to hide keyboard
+        /// </summary>
+        void DisableFocus () {
+            foreach (var item in _instance._inputs.Values) {
+                item.Hide ();
             }
         }
 
