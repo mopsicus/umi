@@ -331,6 +331,13 @@ namespace Mopsicus.Plugins.MobileInput {
 		}
 
 		/// <summary>
+		/// Remove focus, keyboard when app lose focus
+		/// </summary>
+		public override void Hide () {
+			this.SetFocus (false);
+		}
+
+		/// <summary>
 		/// Coroutine for send, so its not freeze main thread
 		/// </summary>
 		/// <param name="data">json</param>

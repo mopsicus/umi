@@ -32,6 +32,8 @@ namespace Mopsicus.Plugins.MobileInput {
         }
 
         public abstract void Direct (JsonObject data);
+
+        public abstract void Hide ();
     }
 
     /// <summary>
@@ -285,6 +287,14 @@ namespace Mopsicus.Plugins.MobileInput {
                     OnData (_data);
                 else if (_error != null)
                     OnError (_error);
+            }
+        }
+
+        void OnApplicationFocus (bool focusStatus) {
+            if (!focusStatus) {
+                foreach (var item in _instance._inputs.Values) {
+                    item.Hide ();
+                }
             }
         }
 
