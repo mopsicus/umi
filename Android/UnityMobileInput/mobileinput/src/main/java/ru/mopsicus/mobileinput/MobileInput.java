@@ -170,8 +170,8 @@ public class MobileInput {
                     }
                     if (multiline) editInputType  |=  InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
                     switch (inputType) {
-                        case "AutoCorrect" : editInputType |=  InputType.TYPE_TEXT_FLAG_AUTO_CORRECT; break;
-                        case "Password" : editInputType |=  InputType.TYPE_NUMBER_VARIATION_PASSWORD | InputType.TYPE_TEXT_VARIATION_PASSWORD ; break;
+                        case "AutoCorrect" : editInputType |= InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_AUTO_CORRECT; break;
+                        case "Password" : editInputType |= InputType.TYPE_CLASS_TEXT | InputType.TYPE_NUMBER_VARIATION_PASSWORD | InputType.TYPE_TEXT_VARIATION_PASSWORD ; break;
                     }
                     break;
                 default : editInputType |= InputType.TYPE_CLASS_TEXT;  // No action

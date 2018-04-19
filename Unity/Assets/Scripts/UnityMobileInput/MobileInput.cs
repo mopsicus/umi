@@ -167,8 +167,10 @@ namespace Mopsicus.Plugins.MobileInput {
 		/// Hide on disable
 		/// </summary>
 		private void OnDisable () {
-			if (_isMobileInputCreated)
+			if (_isMobileInputCreated) {
+				this.SetFocus (false);
 				this.SetVisible (false);
+			}
 		}
 
 		/// <summary>
@@ -291,7 +293,7 @@ namespace Mopsicus.Plugins.MobileInput {
 			_config.TextColor = _inputObjectText.color;
 			_config.Align = _inputObjectText.alignment.ToString ();
 			_config.ContentType = _inputObject.contentType.ToString ();
-			_config.BackgroundColor = _inputObject.colors.disabledColor;
+			_config.BackgroundColor = _inputObject.colors.normalColor;
 			_config.Multiline = (_inputObject.lineType == InputField.LineType.SingleLine) ? false : true;
 		}
 

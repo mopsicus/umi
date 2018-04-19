@@ -1,6 +1,10 @@
-﻿using UnityEngine;
+﻿using Mopsicus.Plugins.MobileInput;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class Demo : MonoBehaviour {
+
+	public InputField InputText;
 
 	public void OnReturn () {
 		Debug.Log ("OnReturn action");
@@ -12,6 +16,10 @@ public class Demo : MonoBehaviour {
 
 	public void OnEndEdit (string text) {
 		Debug.LogFormat ("OnEdit action. Text: {0}", text);
+	}
+
+	public void SetText () {
+		InputText.GetComponent<MobileInput> ().Text = "Text by script";
 	}
 
 }
