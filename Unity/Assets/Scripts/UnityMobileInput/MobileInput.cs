@@ -265,11 +265,9 @@ namespace Mopsicus.Plugins.MobileInput {
 			float yMax = float.NegativeInfinity;
 			for (int i = 0; i < 4; i++) {
 				Vector3 screenCoord;
-				if (rect.GetCanvas().GetComponent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay)
-				{
+				if (rect.GetCanvas().GetComponent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay) {
 					screenCoord = corners[i];
-				} else
-				{
+				} else {
 					screenCoord = RectTransformUtility.WorldToScreenPoint(Camera.main, corners[i]);
 				}
 				if (screenCoord.x < xMin)
