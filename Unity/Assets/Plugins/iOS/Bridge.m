@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 // The MIT License
-// LeopotamGroupLibrary https://github.com/mopsicus/UnityMobileInput
+// UnityMobileInput https://github.com/mopsicus/UnityMobileInput
 // Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 

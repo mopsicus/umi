@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 // The MIT License
-// LeopotamGroupLibrary https://github.com/mopsicus/UnityMobileInput
+// UnityMobileInput https://github.com/mopsicus/UnityMobileInput
 // Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 
@@ -31,16 +31,13 @@ NSString *plugin;
 int mode;
 
 //
-// 
+//
 //
 
-@interface PlaceholderTextView : UITextView {
-    NSObject *_mobileInput;
-}
+@interface PlaceholderTextView : UITextView
 @property(nonatomic, strong) NSString *placeholder;
 @property (nonatomic, strong) UIColor *realTextColor UI_APPEARANCE_SELECTOR;
 @property (nonatomic, strong) UIColor *placeholderColor UI_APPEARANCE_SELECTOR;
--(void) setMobileInput:(NSObject *)input;
 @end
 
 @interface MobileInputHoldView : UIView
@@ -74,7 +71,7 @@ int mode;
 @end
 
 //
-// 
+//
 //
 
 @implementation PlaceholderTextView
@@ -98,7 +95,7 @@ int mode;
     self.placeholderColor = [UIColor lightGrayColor];
 }
 
-- (void)setPlaceholder:(NSString *)textPlaceholder {
+- (void) setPlaceholder:(NSString *)textPlaceholder {
     if ([self.realText isEqualToString:placeholder] && ![self isFirstResponder]) {
         self.text = textPlaceholder;
     }
@@ -108,14 +105,14 @@ int mode;
     [self endEditing:nil];
 }
 
-- (void)setPlaceholderColor:(UIColor *)colorPlaceholder {
+- (void) setPlaceholderColor:(UIColor *)colorPlaceholder {
     placeholderColor = colorPlaceholder;
     if ([super.text isEqualToString:self.placeholder]) {
         self.textColor = self.placeholderColor;
     }
 }
 
-- (NSString *)text {
+- (NSString *) text {
     NSString *text = [super text];
     return ([text isEqualToString:self.placeholder]) ? @"" : text;
 }
@@ -133,7 +130,7 @@ int mode;
     }
 }
 
-- (NSString *)realText {
+- (NSString *) realText {
     return [super text];
 }
 
@@ -145,6 +142,7 @@ int mode;
 }
 
 - (void) endEditing:(NSNotification *)notification {
+    [[UIApplication sharedApplication] sendAction:@selector(resignFirstResponder) to:nil from:nil forEvent:nil];
     if ([self.realText isEqualToString:@""] || self.realText == nil) {
         super.text = self.placeholder;
         self.textColor = self.placeholderColor;
@@ -164,11 +162,7 @@ int mode;
     }
 }
 
--(void)setMobileInput:(NSObject *)input {
-    _mobileInput = input;
-}
-
-- (void)dealloc {
+- (void )dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -187,9 +181,14 @@ int mode;
 }
 
 -(void) tapAction:(id)sender{
+    int count = 0;
     for (MobileInput *input in [mapMobileInput allValues]) {
-        if ([input isFocused])
-            [input showKeyboard:NO];
+        if (!input.isFocused) {
+            count++;
+        }
+    }
+    if (count != [mapMobileInput count]) {
+        [[UIApplication sharedApplication] sendAction:@selector(resignFirstResponder) to:nil from:nil forEvent:nil];
     }
 }
 
@@ -205,8 +204,8 @@ int mode;
     else
         [self applyRotate:orient];
 }
-                                            
-- (void)applyRotate:(UIDeviceOrientation)orientation {
+
+- (void) applyRotate:(UIDeviceOrientation)orientation {
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone && mode == 1) {
         CGRect frameView = unityViewController.view.frame;
         if (frameView.size.width > frameView.size.height)
@@ -273,7 +272,7 @@ MobileInputHoldView *viewPlugin = nil;
 +(void) setPlugin:(NSString *)name {
     plugin = name;
 }
-    
+
 -(id) initWith:(UIViewController *)controller andTag:(int)idInput {
     if(self = [super init]) {
         viewController = controller;
@@ -361,13 +360,13 @@ MobileInputHoldView *viewPlugin = nil;
     NSString *inputType = [data valueForKey:@"input_type"];
     
     UIKeyboardType keyType = UIKeyboardTypeDefault;
-
+    
     if ([contentType isEqualToString:@"Autocorrected"]) {
         autoCorr = YES;
     } else if ([contentType isEqualToString:@"IntegerNumber"]) {
         keyType = UIKeyboardTypeNumberPad;
     } else if ([contentType isEqualToString:@"DecimalNumber"]) {
-        keyType = UIKeyboardTypeDecimalPad; 
+        keyType = UIKeyboardTypeDecimalPad;
     } else if ([contentType isEqualToString:@"Alphanumeric"]) {
         keyType = UIKeyboardTypeAlphabet;
     } else if ([contentType isEqualToString:@"Name"]) {
@@ -428,7 +427,7 @@ MobileInputHoldView *viewPlugin = nil;
         halign = UIControlContentHorizontalAlignmentRight;
         textAlign = NSTextAlignmentRight;
     }
-   
+    
     if (withDoneButton) {
         keyboardDoneButtonView = [[UIToolbar alloc] init];
         [keyboardDoneButtonView sizeToFit];
@@ -456,7 +455,7 @@ MobileInputHoldView *viewPlugin = nil;
         uiFont = [UIFont fontWithName:font size:fontSize];
     } else {
         uiFont = [UIFont systemFontOfSize:fontSize];
-    }    
+    }
     
     if (multiline){
         PlaceholderTextView *textView = [[PlaceholderTextView alloc] initWithFrame:CGRectMake(x, y, width, height)];
@@ -478,7 +477,7 @@ MobileInputHoldView *viewPlugin = nil;
         if (keyType == UIKeyboardTypeEmailAddress)
             textView.autocapitalizationType = UITextAutocapitalizationTypeNone;
         [textView setSecureTextEntry:password];
-        if (keyboardDoneButtonView != nil) 
+        if (keyboardDoneButtonView != nil)
             textView.inputAccessoryView = keyboardDoneButtonView;
         editView = textView;
     } else {
@@ -501,7 +500,7 @@ MobileInputHoldView *viewPlugin = nil;
             textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
         [textField addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
         [textField setSecureTextEntry:password];
-        if (keyboardDoneButtonView != nil) 
+        if (keyboardDoneButtonView != nil)
             textField.inputAccessoryView = keyboardDoneButtonView;
         editView = textField;
     }
@@ -563,16 +562,16 @@ MobileInputHoldView *viewPlugin = nil;
 
 -(void) onTextChange:(NSString *)text {
     NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
-    [msg setValue:TEXT_CHANGE forKey:@"msg"];    
+    [msg setValue:TEXT_CHANGE forKey:@"msg"];
     [msg setValue:text forKey:@"text"];
     [self sendData:msg];
 }
 
 -(void) onTextEditEnd:(NSString *)text {
-    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];    
-    [msg setValue:TEXT_END_EDIT forKey:@"msg"];    
+    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+    [msg setValue:TEXT_END_EDIT forKey:@"msg"];
     [msg setValue:text forKey:@"text"];
-    [self sendData:msg];    
+    [self sendData:msg];
 }
 
 -(void) textViewDidChange:(UITextView *)textView {
@@ -584,11 +583,11 @@ MobileInputHoldView *viewPlugin = nil;
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
-    if (![editView isFirstResponder]) 
+    if (![editView isFirstResponder])
         return YES;
-    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];    
-    [msg setValue:RETURN_PRESSED forKey:@"msg"];    
-    [self sendData:msg];            
+    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+    [msg setValue:RETURN_PRESSED forKey:@"msg"];
+    [self sendData:msg];
     return YES;
 }
 
@@ -608,26 +607,26 @@ MobileInputHoldView *viewPlugin = nil;
 }
 
 -(void) keyboardWillShow:(NSNotification *)notification {
-    if (![editView isFirstResponder]) 
+    if (![editView isFirstResponder])
         return;
     NSDictionary *keyboardInfo = [notification userInfo];
     NSValue *keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameEndUserInfoKey];
     rectKeyboardFrame = [keyboardFrameBegin CGRectValue];
     CGFloat height = rectKeyboardFrame.size.height;
-    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];    
-    [msg setValue:KEYBOARD_ACTION forKey:@"msg"];    
+    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+    [msg setValue:KEYBOARD_ACTION forKey:@"msg"];
     [msg setValue:[NSNumber numberWithBool:YES] forKey:@"show"];
     [msg setValue:[NSNumber numberWithFloat:height] forKey:@"height"];
-    [self sendData:msg]; 
+    [self sendData:msg];
 }
 
 -(void) keyboardWillHide:(NSNotification *)notification {
-    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];    
-    [msg setValue:KEYBOARD_ACTION forKey:@"msg"];    
+    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+    [msg setValue:KEYBOARD_ACTION forKey:@"msg"];
     [msg setValue:[NSNumber numberWithBool:NO] forKey:@"show"];
     [msg setValue:[NSNumber numberWithFloat:0] forKey:@"height"];
-    [self sendData:msg];     
-    if (![editView isFirstResponder]) 
+    [self sendData:msg];
+    if (![editView isFirstResponder])
         return;
 }
 
@@ -637,7 +636,7 @@ MobileInputHoldView *viewPlugin = nil;
 extern "C" {
     
     void inputExecute (int inputId, const char* data) {
-       [MobileInput processMessage:inputId data:[NSString stringWithUTF8String:data]];
+        [MobileInput processMessage:inputId data:[NSString stringWithUTF8String:data]];
     }
     
     void inputDestroy () {

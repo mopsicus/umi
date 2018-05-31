@@ -18,7 +18,7 @@ public class Demo : MonoBehaviour {
 		Debug.LogFormat ("OnEdit action. Text: {0}", text);
 	}
 
-	public void SetText () {
+	public void SetTextData () {
 		InputText.GetComponent<MobileInput> ().Text = "Text by script";
 	}
 
