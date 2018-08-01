@@ -145,7 +145,7 @@ namespace Mopsicus.Plugins.MobileInput {
         /// </summary>
         public string Name {
             get {
-                return "mobileinput";
+                return "MobileInputHandler";
             }
         }
 
