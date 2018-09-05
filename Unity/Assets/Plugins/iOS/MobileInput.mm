@@ -15,6 +15,8 @@
 #define SET_TEXT @"SET_TEXT"
 #define GET_TEXT @"GET_TEXT"
 #define SET_RECT @"SET_RECT"
+#define ON_FOCUS @"ON_FOCUS"
+#define ON_UNFOCUS @"ON_UNFOCUS"
 #define SET_FOCUS @"SET_FOCUS"
 #define SET_VISIBLE @"SET_VISIBLE"
 #define TEXT_CHANGE @"TEXT_CHANGE"
@@ -192,6 +194,19 @@ int mode;
     }
 }
 
+-(BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
+{
+    // Allow buttons to receive press events.  All other views will get ignored
+    for( id foundView in self.subviews )
+    {
+        if( [foundView isKindOfClass:[MobileInput class]] )
+        {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 -(void) setObserverForOrientationChanging {
     [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged:) name:UIDeviceOrientationDidChangeNotification object:[UIDevice currentDevice]];
@@ -238,10 +253,6 @@ MobileInputHoldView *viewPlugin = nil;
 +(void) init:(UIViewController *)viewController {
     unityViewController = viewController;
     mapMobileInput = [[NSMutableDictionary alloc] init];
-    CGRect frameView = unityViewController.view.frame;
-    frameView.origin = CGPointMake(0.0f, 0.0f);
-    viewPlugin = [[MobileInputHoldView alloc] initHoldView:frameView];
-    [unityViewController.view addSubview:viewPlugin];
 }
 
 +(void) processMessage:(int)inputId data:(NSString *)data {
@@ -321,6 +332,8 @@ MobileInputHoldView *viewPlugin = nil;
     editView.frame = CGRectMake(x, y, width, height);
 }
 
+BOOL multiline;
+
 -(void) create:(NSDictionary *)data {
     NSString *placeholder = [data valueForKey:@"placeholder"];
     NSString *font = [data valueForKey:@"font"];
@@ -352,7 +365,8 @@ MobileInputHoldView *viewPlugin = nil;
     NSString *contentType = [data valueForKey:@"content_type"];
     NSString *alignment = [data valueForKey:@"align"];
     BOOL withDoneButton = [[data valueForKey:@"with_done_button"] boolValue];
-    BOOL multiline = [[data valueForKey:@"multiline"] boolValue];
+    BOOL withClearButton = [[data valueForKey:@"with_clear_button"] boolValue];
+    multiline = [[data valueForKey:@"multiline"] boolValue];
     
     BOOL autoCorr = NO;
     BOOL password = NO;
@@ -494,17 +508,22 @@ MobileInputHoldView *viewPlugin = nil;
         textField.contentVerticalAlignment = valign;
         textField.contentHorizontalAlignment = halign;
         textField.textAlignment = textAlign;
+        if (withClearButton)
+            textField.clearButtonMode = UITextFieldViewModeWhileEditing;
         textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholder attributes:@{NSForegroundColorAttributeName: placeHolderColor}];
         textField.delegate = self;
         if (keyType == UIKeyboardTypeEmailAddress)
             textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
         [textField addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
+        [textField addTarget:self action:@selector(textFieldActive:) forControlEvents:UIControlEventEditingDidBegin];
+        [textField addTarget:self action:@selector(textFieldInActive:) forControlEvents:UIControlEventEditingDidEnd];
         [textField setSecureTextEntry:password];
         if (keyboardDoneButtonView != nil)
             textField.inputAccessoryView = keyboardDoneButtonView;
         editView = textField;
     }
-    [viewPlugin addSubview:editView];
+    [unityViewController.view addSubview:editView];
+    
     NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
     [msg setValue:READY forKey:@"msg"];
     [self sendData:msg];
@@ -532,7 +551,6 @@ MobileInputHoldView *viewPlugin = nil;
     }
     return 0;
 }
-
 
 -(void) remove {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -578,7 +596,21 @@ MobileInputHoldView *viewPlugin = nil;
     [self onTextChange:textView.text];
 }
 
+- (void) textViewDidBeginEditing:(UITextView *)textView
+{
+    if (multiline) {
+        NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+        [msg setValue:ON_FOCUS forKey:@"msg"];
+        [self sendData:msg];
+    }
+}
+
 -(void) textViewDidEndEditing:(UITextView *)textView {
+    if (multiline) {
+        NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+        [msg setValue:ON_UNFOCUS forKey:@"msg"];
+        [self sendData:msg];
+    }
     [self onTextEditEnd:textView.text];
 }
 
@@ -600,6 +632,18 @@ MobileInputHoldView *viewPlugin = nil;
         return newLength <= characterLimit;
     else
         return YES;
+}
+
+-(void) textFieldActive:(UITextField *)theTextField {
+    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+    [msg setValue:ON_FOCUS forKey:@"msg"];
+    [self sendData:msg];
+}
+
+-(void) textFieldInActive:(UITextField *)theTextField {
+    NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
+    [msg setValue:ON_UNFOCUS forKey:@"msg"];
+    [self sendData:msg];
 }
 
 -(void) textFieldDidChange:(UITextField *)theTextField {
