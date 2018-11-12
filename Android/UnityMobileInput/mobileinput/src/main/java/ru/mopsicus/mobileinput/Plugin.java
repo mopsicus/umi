@@ -1,10 +1,10 @@
-package ru.mopsicus.mobileinput;
-
 // ----------------------------------------------------------------------------
 // The MIT License
-// LeopotamGroupLibrary https://github.com/mopsicus/UnityMobileInput
+// UnityMobileInput https://github.com/mopsicus/UnityMobileInput
 // Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
+
+package ru.mopsicus.mobileinput;
 
 import android.app.Activity;
 import android.graphics.Rect;
@@ -12,30 +12,35 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 
 import com.unity3d.player.UnityPlayer;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ru.mopsicus.common.Common;
+
 public class Plugin {
 
-    public static String handler = "mobileinput"; // plugin name, need for bridge
+    public static String name = "mobileinput";
 
-    public static Activity unityActivity;
-    public static RelativeLayout mainLayout;
-    private static ViewGroup topViewGroup;
-    private static boolean previousState = true;
+    public static Activity activity;
+    public static RelativeLayout layout;
+    public static Common common;
+    private static ViewGroup group;
+    private static boolean isPreviousState = true;
     private static String KEYBOARD_ACTION = "KEYBOARD_ACTION";
 
+    // Get view recursive
     private static View getLeafView(View view) {
         if (view instanceof ViewGroup) {
-            ViewGroup vg = (ViewGroup)view;
-            for (int i = 0; i < vg.getChildCount(); ++i) {
-                View chview = vg.getChildAt(i);
-                View result = getLeafView(chview);
-                if (result != null)
+            ViewGroup viewGroup = (ViewGroup)view;
+            for (int i = 0; i < viewGroup.getChildCount(); ++i) {
+                View result = getLeafView(viewGroup.getChildAt(i));
+                if (result != null) {
                     return result;
+                }
             }
             return null;
         }
@@ -44,37 +49,39 @@ public class Plugin {
         }
     }
 
+    // Init plugin, create layout for MobileInputs
     public static void init() {
-        unityActivity = UnityPlayer.currentActivity;
-        unityActivity.runOnUiThread(new Runnable() {
+        common = new Common();
+        activity = UnityPlayer.currentActivity;
+        activity.runOnUiThread(new Runnable() {
             public void run() {
-                if (mainLayout != null) {
-                    topViewGroup.removeView(mainLayout);
+                if (layout != null) {
+                    group.removeView(layout);
                 }
-                final ViewGroup rootView = (ViewGroup) unityActivity.findViewById (android.R.id.content);
+                final ViewGroup rootView = (ViewGroup) activity.findViewById (android.R.id.content);
                 View topMostView = getLeafView(rootView);
-                topViewGroup = (ViewGroup) topMostView.getParent();
-                mainLayout = new RelativeLayout(unityActivity);
-                RelativeLayout.LayoutParams rlp = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-                topViewGroup.addView(mainLayout, rlp);
+                group = (ViewGroup) topMostView.getParent();
+                layout = new RelativeLayout(activity);
+                LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                group.addView(layout, params);
                 rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        Rect r = new Rect();
-                        rootView.getWindowVisibleDisplayFrame(r);
+                        Rect rect = new Rect();
+                        rootView.getWindowVisibleDisplayFrame(rect);
                         int screenHeight = rootView.getRootView().getHeight();
-                        int keyboardHeight = screenHeight - r.bottom;
-                        boolean show = (keyboardHeight > screenHeight * 0.15);
+                        int keyboardHeight = screenHeight - rect.bottom;
+                        boolean isShow = (keyboardHeight > screenHeight * 0.15);
                         float height = (float) keyboardHeight / (float) screenHeight;
                         JSONObject json = new JSONObject();
                         try {
                             json.put("msg", KEYBOARD_ACTION);
-                            json.put("show", show);
+                            json.put("show", isShow);
                             json.put("height", height);
                         } catch (JSONException e) {}
-                        if (previousState != show) {
-                            previousState = show;
-                            Bridge.sendData(handler, json.toString());
+                        if (isPreviousState != isShow) {
+                            isPreviousState = isShow;
+                            common.sendData(name, json.toString());
                         }
                     }
                 });
@@ -82,16 +89,20 @@ public class Plugin {
         });
     }
 
+    // Destroy plugin, remove layout
     public static void destroy() {
-        UnityPlayer.currentActivity.runOnUiThread(new Runnable() {
+        activity.runOnUiThread(new Runnable() {
             public void run() {
-                topViewGroup.removeView(mainLayout);
+                if (layout != null) {
+                    group.removeView(layout);
+                }
             }
         });
     }
 
+    // Send data to MobileInput
     public static void execute(final int id, final String data) {
-        UnityPlayer.currentActivity.runOnUiThread(new Runnable() {
+        activity.runOnUiThread(new Runnable() {
             public void run() {
                 MobileInput.processMessage(id, data);
             }

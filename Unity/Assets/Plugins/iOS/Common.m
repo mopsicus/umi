@@ -4,9 +4,9 @@
 // Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 
-#import "Bridge.h"
+#import "Common.h"
 
-@implementation Bridge
+@implementation Common
 
 static NSString *object;
 static NSString *receiver;
@@ -56,8 +56,9 @@ static NSString *receiver;
     UnitySendMessage([object cStringUsingEncoding:NSUTF8StringEncoding], [receiver cStringUsingEncoding:NSUTF8StringEncoding], [result cStringUsingEncoding:NSUTF8StringEncoding]);
 }
 
-void pluginsInit (const char* data) {
-    [Bridge initialize:[NSString stringWithUTF8String:data]];
+// Init plugins system
+void pluginsInit(const char *data) {
+    [Common initialize:[NSString stringWithUTF8String:data]];
 }
 
 @end

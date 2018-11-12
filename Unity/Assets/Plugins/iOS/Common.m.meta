@@ -1,7 +1,5 @@
 fileFormatVersion: 2
-guid: 089a766caa59f4814ad2579baee89e69
-timeCreated: 1524127034
-licenseType: Pro
+guid: 295300052141d45259ecd1fa4452c3ee
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -10,11 +8,6 @@ PluginImporter:
   isPreloaded: 0
   isOverridable: 0
   platformData:
-  - first:
-      Android: Android
-    second:
-      enabled: 1
-      settings: {}
   - first:
       Any: 
     second:
@@ -26,6 +19,12 @@ PluginImporter:
       enabled: 0
       settings:
         DefaultValueInitialized: true
+  - first:
+      iPhone: iOS
+    second:
+      enabled: 1
+      settings:
+        AddToEmbeddedBinaries: false
   userData: 
   assetBundleName: 
   assetBundleVariant: 
