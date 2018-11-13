@@ -7,13 +7,13 @@ You can use default InputField UI component on iOS and Android `without addition
 ## Features
 1. Native input field and keyboard on iOS and Android
 2. Hiding additional mobile input box (Android)
-3. Show "Done" button (iOS)
+3. Show "Done", "Clear" buttons (iOS)
 4. Return button type: Default, Next, Done, Search 
 
 ## How to use
 1. Copy the files into your existing unity project asset folder
 2. Make empty Gameobject and attach ```Plugins``` to your new GameObject
-3. Attach ```MobileInput``` script to your Unity UI ```InputField``` object
+3. Attach ```MobileInputField``` script to your Unity UI ```InputField``` object
 4. For more options set ```ContentType``` to ```Custom``` to your ```InputField``` object
 5. For `Android` make sure your `AndroidManifest.xml` has the following setting
 
