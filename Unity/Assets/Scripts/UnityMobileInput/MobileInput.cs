@@ -114,11 +114,6 @@ namespace Mopsicus.Plugins {
         private JsonObject _error;
 
         /// <summary>
-        /// Callback cache
-        /// </summary>
-        private Action _callback;
-
-        /// <summary>
         /// MobileInput counter
         /// </summary>
         private int _counter = 0;
