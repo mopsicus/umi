@@ -397,6 +397,15 @@ public class MobileInput {
         } else {
             edit.clearFocus();
         }
+        if (!isFocus) {
+            for (int i = 0; i < mobileInputList.size(); i++) {
+                int key = mobileInputList.keyAt(i);
+                MobileInput input = mobileInputList.get(key);
+                if (input.isFocused()) {
+                    return;
+                }
+            }
+        }
         this.showKeyboard(isFocus);
     }
 
