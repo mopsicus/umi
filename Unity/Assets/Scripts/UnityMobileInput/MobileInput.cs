@@ -79,19 +79,19 @@ namespace Mopsicus.Plugins {
         public delegate void ShowDelegate (bool isShow, int height);
 
         /// <summary>
-        /// Delegate for prepare show/hide keyboard
+        /// Delegate for prepare show keyboard
         /// </summary>
         public delegate void PrepareDelegate ();
 
         /// <summary>
         /// Handler for ShowDelegate
         /// </summary>
-        public ShowDelegate OnShowKeyboard = delegate { };
+        public static ShowDelegate OnShowKeyboard = delegate { };
 
         /// <summary>
         /// Handler for PrepareDelegate
         /// </summary>
-        public PrepareDelegate OnPrepareKeyboard = delegate { };
+        public static PrepareDelegate OnPrepareKeyboard = delegate { };
 
         /// <summary>
         /// Mobile fields dictionary
