@@ -24,6 +24,13 @@ You can use default InputField UI component on iOS and Android `without addition
             ...
 </activity>
 ```
+6. To prevent screen slide up on `Android` when keyboard show, add this option to your `AndroidManifest.xml`
+
+```xml
+<activity ...  android:windowSoftInputMode="adjustNothing">
+            ...
+</activity>
+```
 
 ## Demo
 Open Demo scene and build, to try how it works

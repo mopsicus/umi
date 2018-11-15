@@ -7,30 +7,25 @@
 package ru.mopsicus.mobileinput;
 
 import android.app.Activity;
-import android.graphics.Rect;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
-
+import ru.mopsicus.common.Common;
 import com.unity3d.player.UnityPlayer;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import ru.mopsicus.common.Common;
 
 public class Plugin {
 
     public static String name = "mobileinput";
 
+    public static String KEYBOARD_ACTION = "KEYBOARD_ACTION";
     public static Activity activity;
     public static RelativeLayout layout;
     public static Common common;
     private static ViewGroup group;
-    private static boolean isPreviousState = true;
-    private static String KEYBOARD_ACTION = "KEYBOARD_ACTION";
+    private static KeyboardProvider keyboardProvider;
+    private static KeyboardListener keyboardListener;
 
     // Get view recursive
     private static View getLeafView(View view) {
@@ -58,33 +53,14 @@ public class Plugin {
                 if (layout != null) {
                     group.removeView(layout);
                 }
-                final ViewGroup rootView = (ViewGroup) activity.findViewById (android.R.id.content);
+                ViewGroup rootView = (ViewGroup) activity.findViewById (android.R.id.content);
                 View topMostView = getLeafView(rootView);
                 group = (ViewGroup) topMostView.getParent();
                 layout = new RelativeLayout(activity);
                 LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
                 group.addView(layout, params);
-                rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        Rect rect = new Rect();
-                        rootView.getWindowVisibleDisplayFrame(rect);
-                        int screenHeight = rootView.getRootView().getHeight();
-                        int keyboardHeight = screenHeight - rect.bottom;
-                        boolean isShow = (keyboardHeight > screenHeight * 0.15);
-                        float height = (float) keyboardHeight / (float) screenHeight;
-                        JSONObject json = new JSONObject();
-                        try {
-                            json.put("msg", KEYBOARD_ACTION);
-                            json.put("show", isShow);
-                            json.put("height", height);
-                        } catch (JSONException e) {}
-                        if (isPreviousState != isShow) {
-                            isPreviousState = isShow;
-                            common.sendData(name, json.toString());
-                        }
-                    }
-                });
+                keyboardListener = new KeyboardListener();
+                keyboardProvider = new KeyboardProvider(activity, group, keyboardListener);
             }
         });
     }
@@ -93,6 +69,9 @@ public class Plugin {
     public static void destroy() {
         activity.runOnUiThread(new Runnable() {
             public void run() {
+                keyboardProvider.disable();
+                keyboardProvider = null;
+                keyboardListener = null;
                 if (layout != null) {
                     group.removeView(layout);
                 }
