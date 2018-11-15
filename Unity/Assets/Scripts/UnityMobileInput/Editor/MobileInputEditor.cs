@@ -36,9 +36,9 @@ namespace Mopsicus.Plugins {
         private SerializedObject _object;
 
         /// <summary>
-        /// Return key type
+        /// Return press event
         /// </summary>
-        private SerializedProperty _returnKey;
+        private SerializedProperty _onReturnPressedEvent;
 
 #if UNITY_IOS
         /// <summary>
@@ -58,7 +58,7 @@ namespace Mopsicus.Plugins {
         private void OnEnable () {
             _target = (MobileInputField) target;
             _object = new SerializedObject (target);
-            _returnKey = _object.FindProperty ("ReturnKey");
+            _onReturnPressedEvent = _object.FindProperty ("OnReturnPressedEvent");
 #if UNITY_IOS
             _isWithDoneButton = _object.FindProperty ("IsWithDoneButton");
             _isWithClearButton = _object.FindProperty ("IsWithClearButton");
@@ -82,6 +82,7 @@ namespace Mopsicus.Plugins {
             _target.IsWithClearButton = GUILayout.Toggle (_target.IsWithClearButton, " Show \"Clear\" button");
             GUILayout.Space (OFFSET);
 #endif
+            EditorGUILayout.PropertyField (_onReturnPressedEvent);
             if (EditorGUI.EndChangeCheck ()) {
                 _object.ApplyModifiedProperties ();
             }
