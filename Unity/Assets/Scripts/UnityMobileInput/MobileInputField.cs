@@ -427,6 +427,15 @@ namespace Mopsicus.Plugins {
             }
         }
 
+	/// <summary>
+        /// Convert float value to InvariantCulture string
+        /// </summary>
+        /// <param name="value">float value</param>
+        /// <returns></returns>
+        private string InvariantCultureString (float value){
+            return value.ToString ("G", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         /// <summary>
         /// Create native input field
         /// </summary>
@@ -434,29 +443,29 @@ namespace Mopsicus.Plugins {
             Rect rect = GetScreenRectFromRectTransform (this._inputObjectText.rectTransform);
             JsonObject data = new JsonObject ();
             data["msg"] = CREATE;
-            data["x"] = rect.x / Screen.width;
-            data["y"] = rect.y / Screen.height;
-            data["width"] = rect.width / Screen.width;
-            data["height"] = rect.height / Screen.height;
+            data["x"] = InvariantCultureString(rect.x / Screen.width);
+            data["y"] = InvariantCultureString(rect.y / Screen.height);
+            data["width"] = InvariantCultureString(rect.width / Screen.width);
+            data["height"] = InvariantCultureString(rect.height / Screen.height);
             data["character_limit"] = _config.CharacterLimit;
-            data["text_color_r"] = _config.TextColor.r;
-            data["text_color_g"] = _config.TextColor.g;
-            data["text_color_b"] = _config.TextColor.b;
-            data["text_color_a"] = _config.TextColor.a;
-            data["back_color_r"] = _config.BackgroundColor.r;
-            data["back_color_g"] = _config.BackgroundColor.g;
-            data["back_color_b"] = _config.BackgroundColor.b;
-            data["back_color_a"] = _config.BackgroundColor.a;
-            data["font_size"] = _config.FontSize;
+            data["text_color_r"] = InvariantCultureString(_config.TextColor.r);
+            data["text_color_g"] = InvariantCultureString(_config.TextColor.g);
+            data["text_color_b"] = InvariantCultureString(_config.TextColor.b);
+            data["text_color_a"] = InvariantCultureString(_config.TextColor.a);
+            data["back_color_r"] = InvariantCultureString(_config.BackgroundColor.r);
+            data["back_color_g"] = InvariantCultureString(_config.BackgroundColor.g);
+            data["back_color_b"] = InvariantCultureString(_config.BackgroundColor.b);
+            data["back_color_a"] = InvariantCultureString(_config.BackgroundColor.a);
+            data["font_size"] = InvariantCultureString(_config.FontSize);
             data["content_type"] = _config.ContentType;
             data["align"] = _config.Align;
             data["with_done_button"] = this.IsWithDoneButton;
             data["with_clear_button"] = this.IsWithClearButton;
             data["placeholder"] = _config.Placeholder;
-            data["placeholder_color_r"] = _config.PlaceholderColor.r;
-            data["placeholder_color_g"] = _config.PlaceholderColor.g;
-            data["placeholder_color_b"] = _config.PlaceholderColor.b;
-            data["placeholder_color_a"] = _config.PlaceholderColor.a;
+            data["placeholder_color_r"] = InvariantCultureString(_config.PlaceholderColor.r);
+            data["placeholder_color_g"] = InvariantCultureString(_config.PlaceholderColor.g);
+            data["placeholder_color_b"] = InvariantCultureString(_config.PlaceholderColor.b);
+            data["placeholder_color_a"] = InvariantCultureString(_config.PlaceholderColor.a);
             data["multiline"] = _config.Multiline;
             data["input_type"] = _config.InputType;
             data["keyboard_type"] = _config.KeyboardType;
@@ -523,10 +532,10 @@ namespace Mopsicus.Plugins {
             _lastRect = rect;
             JsonObject data = new JsonObject ();
             data["msg"] = SET_RECT;
-            data["x"] = rect.x / Screen.width;
-            data["y"] = rect.y / Screen.height;
-            data["width"] = rect.width / Screen.width;
-            data["height"] = rect.height / Screen.height;
+            data["x"] = InvariantCultureString(rect.x / Screen.width);
+            data["y"] = InvariantCultureString(rect.y / Screen.height);
+            data["width"] = InvariantCultureString(rect.width / Screen.width);
+            data["height"] = InvariantCultureString(rect.height / Screen.height);
             this.Execute (data);
         }
 
