@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // The MIT License
 // UnityMobileInput https://github.com/mopsicus/UnityMobileInput
-// Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
+// Copyright (c) 2018-2020 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 
 #import <UIKit/UIKit.h>
@@ -435,7 +435,9 @@ BOOL multiline;
         if (withClearButton) {
             textField.clearButtonMode = UITextFieldViewModeWhileEditing;
         }
-        textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholder attributes:@{NSForegroundColorAttributeName: placeHolderColor}];
+        NSMutableParagraphStyle *setting = [[NSMutableParagraphStyle alloc] init];
+        setting.alignment = textAlign;
+        textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholder attributes:@{NSForegroundColorAttributeName: placeHolderColor, NSParagraphStyleAttributeName : setting}];        
         textField.delegate = self;
         if (keyType == UIKeyboardTypeEmailAddress) {
             textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
