@@ -9,6 +9,7 @@ You can use default InputField UI component on iOS and Android `without addition
 2. Hiding additional mobile input box (Android)
 3. Show "Done", "Clear" buttons (iOS)
 4. Return button type: Default, Next, Done, Search 
+5. Custom fonts support
 
 ## How to use
 1. Copy the files into your existing unity project asset folder
@@ -31,6 +32,12 @@ You can use default InputField UI component on iOS and Android `without addition
             ...
 </activity>
 ```
+
+## How to use custom fonts
+1. Copy font TTF to StreamingAssets folder
+2. Input font name in property instead "default"
+3. You are cool
+
 
 ## Demo
 Open Demo scene and build, to try how it works
