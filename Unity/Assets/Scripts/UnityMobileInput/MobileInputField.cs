@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // The MIT License
 // UnityMobileInput https://github.com/mopsicus/UnityMobileInput
-// Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
+// Copyright (c) 2018-2020 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 
 using System;
@@ -46,6 +46,16 @@ namespace Mopsicus.Plugins {
             Done,
             Search
         }
+
+        /// <summary>
+        /// Custom font name
+        /// </summary>
+        public string CustomFont = "default";        
+
+        /// <summary>
+        /// Hide and deselect input manually
+        /// </summary>
+        public bool IsManualHideControl = false;
 
         /// <summary>
         /// "Done" button visible (for iOS)
@@ -293,7 +303,9 @@ namespace Mopsicus.Plugins {
                 if (Input.touchCount > 0) {
                     for (int i = 0; i < Input.touches.Length; i++) {
                         if (!this._inputObjectText.rectTransform.rect.Contains (Input.touches[i].position)) {
-                            Hide ();
+                            if (!IsManualHideControl) {
+                                Hide ();
+                            }
                             return;
                         }
                     }
@@ -467,6 +479,7 @@ namespace Mopsicus.Plugins {
             data["placeholder_color_b"] = InvariantCultureString(_config.PlaceholderColor.b);
             data["placeholder_color_a"] = InvariantCultureString(_config.PlaceholderColor.a);
             data["multiline"] = _config.Multiline;
+            data["font"] = this.CustomFont;
             data["input_type"] = _config.InputType;
             data["keyboard_type"] = _config.KeyboardType;
             switch (ReturnKey) {

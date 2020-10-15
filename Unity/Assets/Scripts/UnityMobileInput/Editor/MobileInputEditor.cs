@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // The MIT License
 // UnityMobileInput https://github.com/mopsicus/UnityMobileInput
-// Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
+// Copyright (c) 2018-2020 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 
 using UnityEditor;
@@ -36,6 +36,16 @@ namespace Mopsicus.Plugins {
         private SerializedObject _object;
 
         /// <summary>
+        /// Set custom font
+        /// </summary>
+        private SerializedProperty _customFont;
+
+        /// <summary>
+        /// Is manual hide control
+        /// </summary>
+        private SerializedProperty _isManualHideControl;
+
+        /// <summary>
         /// Return press event
         /// </summary>
         private SerializedProperty _onReturnPressedEvent;
@@ -58,6 +68,8 @@ namespace Mopsicus.Plugins {
         private void OnEnable () {
             _target = (MobileInputField) target;
             _object = new SerializedObject (target);
+            _customFont = _object.FindProperty ("CustomFont");
+            _isManualHideControl = _object.FindProperty ("IsManualHideControl");
             _onReturnPressedEvent = _object.FindProperty ("OnReturnPressedEvent");
 #if UNITY_IOS
             _isWithDoneButton = _object.FindProperty ("IsWithDoneButton");
@@ -75,8 +87,16 @@ namespace Mopsicus.Plugins {
             GUILayout.Label ("Select type for Return button:");
             _target.ReturnKey = (MobileInputField.ReturnKeyType) GUILayout.Toolbar ((int) _target.ReturnKey, new string[] { "Default", "Next", "Done", "Search" });
             GUILayout.Space (OFFSET);
-#if UNITY_IOS
             GUILayout.Label ("Options:");
+            GUILayout.Space (SPACE);
+            GUILayout.BeginHorizontal ();
+            GUILayout.Label ("Custom font name:", GUILayout.MaxWidth (120));
+            _target.CustomFont = GUILayout.TextField (_target.CustomFont);
+            GUILayout.EndHorizontal ();
+            GUILayout.Space (SPACE);
+            _target.IsManualHideControl = GUILayout.Toggle (_target.IsManualHideControl, " Manual hide control");
+            GUILayout.Space (SPACE);
+#if UNITY_IOS
             _target.IsWithDoneButton = GUILayout.Toggle (_target.IsWithDoneButton, " Show \"Done\" button");
             GUILayout.Space (SPACE);
             _target.IsWithClearButton = GUILayout.Toggle (_target.IsWithClearButton, " Show \"Clear\" button");

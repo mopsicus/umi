@@ -6,6 +6,7 @@
 
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import <CoreText/CoreText.h>
 #import "UnityForwardDecls.h"
 #import <MobileCoreServices/UTCoreTypes.h>
 #import "Common.h"
@@ -22,7 +23,6 @@
 #define TEXT_END_EDIT @"TEXT_END_EDIT"
 #define RETURN_PRESSED @"RETURN_PRESSED"
 #define KEYBOARD_ACTION @"KEYBOARD_ACTION"
-#define KEYBOARD_PREPARE @"KEYBOARD_PREPARE"
 #define READY @"READY"
 
 UIViewController *mainViewController = nil;
@@ -280,6 +280,7 @@ BOOL multiline;
     UIColor *placeHolderColor = [UIColor colorWithRed:placeHolderColor_r green:placeHolderColor_g blue:placeHolderColor_b alpha:placeHolderColor_a];
     NSString *contentType = [data valueForKey:@"content_type"];
     NSString *alignment = [data valueForKey:@"align"];
+    NSString *customFont = [data valueForKey:@"font"];
     BOOL withDoneButton = [[data valueForKey:@"with_done_button"] boolValue];
     BOOL withClearButton = [[data valueForKey:@"with_clear_button"] boolValue];
     multiline = [[data valueForKey:@"multiline"] boolValue];
@@ -393,6 +394,19 @@ BOOL multiline;
     }
     fontSize = fontSize / [UIScreen mainScreen].scale;
     UIFont *uiFont = [UIFont systemFontOfSize:fontSize];
+    if (![customFont isEqualToString:@"default"]) {
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *fontPath = [[paths objectAtIndex:0] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.ttf", customFont]];
+        NSURL *url = [NSURL fileURLWithPath:fontPath];
+        CGDataProviderRef fontDataProvider = CGDataProviderCreateWithURL((__bridge CFURLRef)url);
+        CGFontRef newFont = CGFontCreateWithDataProvider(fontDataProvider);
+        NSString *font = (__bridge NSString *)CGFontCopyPostScriptName(newFont);
+        CGDataProviderRelease(fontDataProvider);
+        CFErrorRef error;
+        CTFontManagerRegisterGraphicsFont(newFont, &error);
+        CGFontRelease(newFont);
+        uiFont = [UIFont fontWithName:font size:fontSize];
+    }
     if (multiline) {
         PlaceholderTextView *textView = [[PlaceholderTextView alloc] initWithFrame:CGRectMake(x, y, width, height)];
         textView.keyboardType = keyType;
@@ -572,9 +586,6 @@ BOOL multiline;
     if (![editView isFirstResponder]) {
         return;
     }
-    NSMutableDictionary *tmp = [[NSMutableDictionary alloc] init];
-    [tmp setValue:KEYBOARD_PREPARE forKey:@"msg"];
-    [self sendData:tmp];
     NSDictionary *keyboardInfo = [notification userInfo];
     NSValue *keyboardFrameBegin = [keyboardInfo valueForKey:UIKeyboardFrameEndUserInfoKey];
     rectKeyboardFrame = [keyboardFrameBegin CGRectValue];

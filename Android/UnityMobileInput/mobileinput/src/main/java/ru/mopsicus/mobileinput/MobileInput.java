@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 // The MIT License
 // UnityMobileInput https://github.com/mopsicus/UnityMobileInput
-// Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
+// Copyright (c) 2018-2020 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 
 package ru.mopsicus.mobileinput;
@@ -12,6 +12,7 @@ import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -40,7 +41,6 @@ public class MobileInput {
     private static final String TEXT_END_EDIT = "TEXT_END_EDIT";
     private static final String ANDROID_KEY_DOWN = "ANDROID_KEY_DOWN";
     private static final String RETURN_PRESSED = "RETURN_PRESSED";
-    private static final String KEYBOARD_PREPARE = "KEYBOARD_PREPARE";
     private static final String READY = "READY";
     private EditText edit;
     private int id;
@@ -139,6 +139,7 @@ public class MobileInput {
             String keyboardType = data.optString("keyboard_type");
             String returnKeyType = data.getString("return_key_type");
             String alignment = data.getString("align");
+            String customFont = data.getString("font");
             boolean multiline = data.getBoolean("multiline");
             edit = new EditText(Plugin.activity.getApplicationContext());
             edit.setSingleLine(!multiline);
@@ -279,7 +280,16 @@ public class MobileInput {
             edit.setTextColor(Color.argb(textColor_a, textColor_r, textColor_g, textColor_b));
             edit.setBackgroundColor(Color.argb(backColor_a, backColor_r, backColor_g, backColor_b));
             edit.setHintTextColor(Color.argb(placeHolderColor_a, placeHolderColor_r, placeHolderColor_g, placeHolderColor_b));
-            edit.setTypeface(Typeface.SANS_SERIF);
+            if (!customFont.equals("default")) {
+                try {
+                    Typeface face = Typeface.createFromAsset(Plugin.activity.getAssets(), String.format("%s.ttf", customFont));
+                    edit.setTypeface(face);
+                } catch (Exception e) {
+                    edit.setTypeface(Typeface.SANS_SERIF);
+                }
+            } else {
+                edit.setTypeface(Typeface.SANS_SERIF);
+            }
             final MobileInput input = this;
             edit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
@@ -474,19 +484,13 @@ public class MobileInput {
         InputMethodManager imm = (InputMethodManager) Plugin.activity.getSystemService(Plugin.activity.INPUT_METHOD_SERVICE);
         View rootView = Plugin.activity.getWindow().getDecorView();
         if (isShow) {
-            final MobileInput input = this;
-            JSONObject data = new JSONObject();
-            try {
-                data.put("msg", KEYBOARD_PREPARE);
-            }
-            catch(JSONException e) {}
-            sendData(data);
             imm.showSoftInput(edit, InputMethodManager.SHOW_FORCED);
         } else {
             edit.clearFocus();
             rootView.clearFocus();
             imm.hideSoftInputFromWindow(edit.getWindowToken(), 0);
         }
+
     }
 
     // Wrapper to send data to Unity app

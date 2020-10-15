@@ -1,13 +1,17 @@
 // ----------------------------------------------------------------------------
 // The MIT License
 // UnityMobileInput https://github.com/mopsicus/UnityMobileInput
-// Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
+// Copyright (c) 2018-2020 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Text;
 using NiceJson;
 using UnityEngine;
+using UnityEngine.Networking;
 #if UNITY_IOS
 using System.Runtime.InteropServices;
 #endif
@@ -64,14 +68,14 @@ namespace Mopsicus.Plugins {
     public class MobileInput : MonoBehaviour, IPlugin {
 
         /// <summary>
-        /// Event name for keyboard prepare to change
-        /// </summary>
-        const string KEYBOARD_PREPARE = "KEYBOARD_PREPARE";
-
-        /// <summary>
         /// Event name for keyboard show/hide
         /// </summary>
         const string KEYBOARD_ACTION = "KEYBOARD_ACTION";
+
+        /// <summary>
+        /// Key name for settings save
+        /// </summary>
+        const string INIT_KEY = "mobileinput_inited";
 
         /// <summary>
         /// Delegate for show/hide keyboard action
@@ -79,19 +83,9 @@ namespace Mopsicus.Plugins {
         public delegate void ShowDelegate (bool isShow, int height);
 
         /// <summary>
-        /// Delegate for prepare show keyboard
-        /// </summary>
-        public delegate void PrepareDelegate ();
-
-        /// <summary>
         /// Handler for ShowDelegate
         /// </summary>
         public static ShowDelegate OnShowKeyboard = delegate { };
-
-        /// <summary>
-        /// Handler for PrepareDelegate
-        /// </summary>
-        public static PrepareDelegate OnPrepareKeyboard = delegate { };
 
         /// <summary>
         /// Mobile fields dictionary
@@ -176,9 +170,6 @@ namespace Mopsicus.Plugins {
                 JsonObject response = (JsonObject) JsonNode.ParseJsonString (data["data"]);
                 string code = response["msg"];
                 switch (code) {
-                    case KEYBOARD_PREPARE:
-                        OnPrepareKeyboard ();
-                        break;
                     case KEYBOARD_ACTION:
                         bool isShow = response["show"];
                         int height = 0;
@@ -267,6 +258,18 @@ namespace Mopsicus.Plugins {
         /// Init plugin
         /// </summary>
         public static void Init () {
+            int state = PlayerPrefs.GetInt (INIT_KEY, 0);
+            if (state == 0) {
+                string path = Application.streamingAssetsPath;
+                if (Directory.Exists (path)) {
+                    string[] files = Directory.GetFiles (path, "*.ttf");
+                    foreach (string filePath in files) {
+                        PrepareFontsAssets (Path.GetFileName (filePath));
+                    }
+                }
+                PlayerPrefs.SetInt (INIT_KEY, 1);
+                PlayerPrefs.Save ();
+            }
 #if UNITY_EDITOR
 #elif UNITY_ANDROID
             using (AndroidJavaClass plugin = new AndroidJavaClass (string.Format (Plugins.ANDROID_CLASS_MASK, _instance.Name))) {
@@ -302,6 +305,34 @@ namespace Mopsicus.Plugins {
                     OnError (_error);
                 }
             }
+        }
+
+        /// <summary>
+        /// Copy files from StreamingAssets to device path
+        /// </summary>
+        /// <param name="fileName">File name</param>
+        static void PrepareFontsAssets (string fileName) {
+            string folder = Application.dataPath;
+            string filepath = string.Format ("{0}/{1}", Application.persistentDataPath, fileName);
+#if UNITY_EDITOR
+            string data = string.Format ("{0}/{1}", Application.streamingAssetsPath, fileName);
+            if (File.Exists (filepath)) {
+                File.Delete (filepath);
+            }
+            File.Copy (data, filepath);
+#elif UNITY_ANDROID
+            using (UnityWebRequest www = UnityWebRequest.Get (string.Format ("jar:file://{0}!/assets/{1}", folder, fileName))) {
+                www.SendWebRequest ();
+                while (!www.isDone) { }
+                File.WriteAllBytes (filepath, www.downloadHandler.data);
+            }
+#elif UNITY_IOS
+            string data = string.Format ("{0}/Raw/{1}", folder, fileName);
+            if (File.Exists (filepath)) {
+                File.Delete (filepath);
+            }
+            File.Copy (data, filepath);
+#endif
         }
 
         /// <summary>
