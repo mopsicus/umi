@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/Naereen/StrapDown.js/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/Naereen/StrapDown.js.svg)](https://GitHub.com/Naereen/StrapDown.js/issues/) [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+[![GitHub license](https://img.shields.io/github/license/Naereen/StrapDown.js.svg)](https://github.com/mopsicus/UnityMobileInput/blob/master/LICENSE) [![GitHub issues](https://img.shields.io/github/issues/mopsicus/UnityMobileInput.svg)](https://GitHub.com/mopsicus/UnityMobileInput/issues/) [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/mopsicus/UnityMobileInput/graphs/commit-activity)
 
 # UnityMobileInput
 Unity Mobile Input Plugin for iOS and Android (Unity UI compatible)
