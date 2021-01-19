@@ -19,6 +19,11 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.PopupWindow;
+import android.util.Log;
+import android.view.Display;
+import android.view.Window;
+import android.content.Context;
+import android.util.DisplayMetrics;
 
 public class KeyboardProvider extends PopupWindow {
 
@@ -47,6 +52,9 @@ public class KeyboardProvider extends PopupWindow {
         setHeight(WindowManager.LayoutParams.MATCH_PARENT);
         setBackgroundDrawable(new ColorDrawable(0));
         showAtLocation(parentView, Gravity.NO_GRAVITY, 0, 0);
+
+        navBarHeight = getNavigationBarHeight();
+
         popupView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -67,25 +75,57 @@ public class KeyboardProvider extends PopupWindow {
         return activity.getResources().getConfiguration().orientation;
     }
 
+    private int heightMax;
+    private int navBarHeight;
+
     // Handler to get keyboard height
     private void handleOnGlobalLayout() {
-        Point screenSize = new Point();
-        activity.getWindowManager().getDefaultDisplay().getSize(screenSize);
-        Rect rect = new Rect();
+
+		Rect rect = new Rect();
         popupView.getWindowVisibleDisplayFrame(rect);
-        int orientation = getScreenOrientation();
-        int keyboardHeight = screenSize.y - rect.bottom;
-        float height = keyboardHeight / (float) screenSize.y;
-        if (keyboardHeight == 0) {
-            notifyKeyboardHeight(0, 0, orientation);
-        } else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-            this.keyboardPortraitHeight = keyboardHeight;
-            notifyKeyboardHeight(height, keyboardPortraitHeight, orientation);
-        } else {
-            this.keyboardLandscapeHeight = keyboardHeight;
-            notifyKeyboardHeight(height, keyboardLandscapeHeight, orientation);
+        if (rect.bottom > heightMax) {
+            heightMax = rect.bottom;
         }
+        int keyboardHeight = heightMax - rect.bottom;
+        if (keyboardHeight > 0)
+        {
+        	keyboardHeight += navBarHeight;
+        }
+        int orientation = getScreenOrientation();
+        notifyKeyboardHeight(keyboardHeight, keyboardHeight, orientation);
     }
+
+    private int getNavigationBarHeight() {
+    	if (!hasSoftKeys())
+    	{
+    		return 0;
+    	}
+        Resources resources = activity.getResources();
+        int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return resources.getDimensionPixelSize(resourceId);
+        }
+        return 0;
+    }
+
+    public boolean hasSoftKeys() {
+        Display d = activity.getWindowManager().getDefaultDisplay();
+
+        DisplayMetrics realDisplayMetrics = new DisplayMetrics();
+        d.getRealMetrics(realDisplayMetrics);
+
+        int realHeight = realDisplayMetrics.heightPixels;
+        int realWidth = realDisplayMetrics.widthPixels;
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        d.getMetrics(displayMetrics);
+
+        int displayHeight = displayMetrics.heightPixels;
+        int displayWidth = displayMetrics.widthPixels;
+
+        boolean hasSoftwareKeys =  (realWidth - displayWidth) > 0 || (realHeight - displayHeight) > 0;
+	    return hasSoftwareKeys;
+	}
 
     // Send data observer
     private void notifyKeyboardHeight(float height, int keyboardHeight, int orientation) {
