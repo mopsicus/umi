@@ -173,11 +173,7 @@ namespace Mopsicus.Plugins {
                     case KEYBOARD_ACTION:
                         bool isShow = response["show"];
                         int height = 0;
-#if UNITY_ANDROID
-                        height = (int) (response["height"] * (float) Screen.height);
-#elif UNITY_IOS
                         height = response["height"];
-#endif
                         OnShowKeyboard (isShow, height);
                         break;
                     default:
