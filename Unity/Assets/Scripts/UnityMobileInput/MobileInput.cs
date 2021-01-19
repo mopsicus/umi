@@ -1,621 +1,351 @@
-﻿// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // The MIT License
 // UnityMobileInput https://github.com/mopsicus/UnityMobileInput
-// Copyright (c) 2018 Mopsicus <mail@mopsicus.ru>
+// Copyright (c) 2018-2020 Mopsicus <mail@mopsicus.ru>
 // ----------------------------------------------------------------------------
+
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Text;
 using NiceJson;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Networking;
+#if UNITY_IOS
+using System.Runtime.InteropServices;
+#endif
 
-namespace Mopsicus.Plugins.MobileInput
-{
+namespace Mopsicus.Plugins {
 
     /// <summary>
-    /// Wrapper for Unity InputField
-    /// Add this component on your InputField
+    /// Base class for InputField
     /// </summary>
-    [RequireComponent(typeof(InputField))]
-    public class MobileInput : MobileInputReceiver
-    {
+    public abstract class MobileInputReceiver : MonoBehaviour {
 
         /// <summary>
-        /// Config structure
+        /// Current input id
         /// </summary>
-        private struct MobileInputConfig
-        {
-            public bool Multiline;
-            public Color TextColor;
-            public Color BackgroundColor;
-            public string ContentType;
-            public string Font;
-            public float FontSize;
-            public string Align;
-            public string Placeholder;
-            public Color PlaceholderColor;
-            public int CharacterLimit;
+        private int _id;
 
+        /// <summary>
+        /// Init input and register interface
+        /// </summary>
+        protected virtual void Start () {
+            _id = MobileInput.Register (this);
         }
 
         /// <summary>
-        /// Button type
+        /// Action on destroy
         /// </summary>
-        public enum ReturnKeyType
-        {
-            Default,
-            Next,
-            Done,
-            Search
+        protected virtual void OnDestroy () {
+            MobileInput.RemoveReceiver (_id);
         }
 
         /// <summary>
-        /// Input type
+        /// Send data to plugin
         /// </summary>
-        public enum InputType
-        {
-            AutoCorrect,
-            Password
+        /// <param name="data">Data</param>
+        protected void Execute (JsonObject data) {
+            MobileInput.Execute (_id, data);
         }
 
         /// <summary>
-        /// Keyboard type
+        /// Send data to plugin manually
         /// </summary>
-        public enum KeyboardType
-        {
-            ASCIICapable,
-            NumbersAndPunctuation,
-            URL,
-            NumberPad,
-            PhonePad,
-            NamePhonePad,
-            EmailAddress
-        }
+        /// <param name="data">Data</param>
+        public abstract void Send (JsonObject data);
 
         /// <summary>
-        /// "Done" button visible (for iOS)
+        /// Hide input
         /// </summary>
-        public bool IsWithDoneButton = true;
-        /// <summary>
-        /// "(x)" button visible (for iOS)
-        /// </summary>
-        public bool IsWithClearButton = true;
-        /// <summary>
-        /// button type
-        /// </summary>
-        public ReturnKeyType ReturnKey;
-        /// <summary>
-        /// input type
-        /// </summary>
-        public InputType Type;
-        /// <summary>
-        /// keyboard type
-        /// </summary>
-        public KeyboardType Keyboard;
-        /// <summary>
-        /// action when Return pressed
-        /// </summary>
-        public event Action ReturnPressed;
-        /// <summary>
-        /// action when Focus changed
-        /// </summary>
-        public event Action<bool> FocusChanged = (b) => { };
-        /// <summary>
-        /// event when Return pressed
-        /// </summary>
-        public UnityEngine.Events.UnityEvent OnReturnPressed;
-        /// <summary>
-        /// mobile input creation flag
-        /// </summary>
-        private bool _isMobileInputCreated = false;
-        /// <summary>
-        /// InputField object
-        /// </summary>
-        private InputField _inputObject;
-        /// <summary>
-        /// Text object from _inputObject
-        /// </summary>
-        private Text _inputObjectText;
-        /// <summary>
-        /// set focus on create
-        /// </summary>
-        private bool _isFocusOnCreate;
-        /// <summary>
-        /// set visible on create
-        /// </summary>
-        private bool _isVisibleOnCreate = true;
-        /// <summary>
-        /// last inputfield position
-        /// </summary>
-        private Rect _lastRect;
-        /// <summary>
-        /// config
-        /// </summary>
-        private MobileInputConfig _config;
+        public abstract void Hide ();
+    }
 
-        // event for plugin communication
+    /// <summary>
+    /// Mobile native input plugin
+    /// </summary>
+    public class MobileInput : MonoBehaviour, IPlugin {
 
-        private const string CREATE = "CREATE_EDIT";
-        private const string REMOVE = "REMOVE_EDIT";
-        private const string SET_TEXT = "SET_TEXT";
-        private const string SET_RECT = "SET_RECT";
-        private const string SET_FOCUS = "SET_FOCUS";
-        private const string ON_FOCUS = "ON_FOCUS";
-        private const string ON_UNFOCUS = "ON_UNFOCUS";
-        private const string SET_VISIBLE = "SET_VISIBLE";
-        private const string TEXT_CHANGE = "TEXT_CHANGE";
-        private const string TEXT_END_EDIT = "TEXT_END_EDIT";
-        private const string ANDROID_KEY_DOWN = "ANDROID_KEY_DOWN";
-        private const string RETURN_PRESSED = "RETURN_PRESSED";
-        private const string READY = "READY";
+        /// <summary>
+        /// Event name for keyboard show/hide
+        /// </summary>
+        const string KEYBOARD_ACTION = "KEYBOARD_ACTION";
+
+        /// <summary>
+        /// Key name for settings save
+        /// </summary>
+        const string INIT_KEY = "mobileinput_inited";
+
+        /// <summary>
+        /// Delegate for show/hide keyboard action
+        /// </summary>
+        public delegate void ShowDelegate (bool isShow, int height);
+
+        /// <summary>
+        /// Handler for ShowDelegate
+        /// </summary>
+        public static ShowDelegate OnShowKeyboard = delegate { };
+
+        /// <summary>
+        /// Mobile fields dictionary
+        /// </summary>
+        private Dictionary<int, MobileInputReceiver> _inputs = new Dictionary<int, MobileInputReceiver> ();
+
+        /// <summary>
+        /// Current instance
+        /// </summary>
+        private static MobileInput _instance;
+
+        /// <summary>
+        /// Cache data for hidden app state
+        /// </summary>
+        private JsonObject _data;
+
+        /// <summary>
+        /// Cache error for hidden app state
+        /// </summary>
+        private JsonObject _error;
+
+        /// <summary>
+        /// MobileInput counter
+        /// </summary>
+        private int _counter = 0;
+
+#if UNITY_IOS
+        /// <summary>
+        /// Send data to plugin input
+        /// </summary>
+        [DllImport ("__Internal")]
+        private static extern void inputExecute (int id, string json);
+
+        /// <summary>
+        /// Init MobileInput plugin
+        /// </summary>
+        [DllImport ("__Internal")]
+        private static extern void inputInit ();
+
+        /// <summary>
+        /// Destroy MobileInput plugin
+        /// </summary>
+        [DllImport ("__Internal")]
+        private static extern void inputDestroy ();
+#endif
 
         /// <summary>
         /// Constructor
         /// </summary>
-        private void Awake()
-        {
-            _inputObject = this.GetComponent<InputField>();
-            if (_inputObject == null)
-            {
-#if DEBUG
-                Debug.LogErrorFormat("No InputField found {0} MobileInput Error", this.name);
+        private void Awake () {
+            if ((object) _instance == null) {
+                _instance = GetComponent<MobileInput> ();
+                Init ();
+            }
+        }
+
+        /// <summary>
+        /// Plugin name
+        /// </summary>
+        public string Name {
+            get {
+                return GetType ().Name.ToLower ();
+            }
+        }
+
+        /// <summary>
+        /// Current instance for external access
+        /// </summary>
+        public static MobileInput Plugin {
+            get {
+                return _instance;
+            }
+        }
+
+        /// <summary>
+        /// Callback on data
+        /// </summary>
+        public void OnData (JsonObject data) {
+            Debug.Log (string.Format ("{0} plugin OnData: {1}", GetType ().Name, data.ToJsonPrettyPrintString ()));
+            _data = data;
+            try {
+                JsonObject response = (JsonObject) JsonNode.ParseJsonString (data["data"]);
+                string code = response["msg"];
+                switch (code) {
+                    case KEYBOARD_ACTION:
+                        bool isShow = response["show"];
+                        int height = 0;
+#if UNITY_ANDROID
+                        height = (int) (response["height"] * (float) Screen.height);
+#elif UNITY_IOS
+                        height = response["height"];
 #endif
-                throw new MissingComponentException();
+                        OnShowKeyboard (isShow, height);
+                        break;
+                    default:
+                        int id = response["id"];
+                        if (_inputs.ContainsKey (id)) {
+                            GetReceiver (id).Send (response);
+                        }
+                        break;
+                }
+                _data = null;
+            } catch (Exception e) {
+                Debug.LogError (string.Format ("{0} plugin OnData error: {1}", GetType ().Name, e.Message));
             }
-            _inputObjectText = _inputObject.textComponent;
         }
 
         /// <summary>
-        /// Create mobile input on Start with coroutine
+        /// Callback on error
         /// </summary>
-        protected override void Start()
-        {
-            base.Start();
-            StartCoroutine(InitialzieOnNextFrame());
-        }
-
-        /// <summary>
-        /// Show on enable
-        /// </summary>
-        private void OnEnable()
-        {
-            if (_isMobileInputCreated)
-                this.SetVisible(true);
-        }
-
-        /// <summary>
-        /// Hide on disable
-        /// </summary>
-        private void OnDisable()
-        {
-            if (_isMobileInputCreated)
-            {
-                this.SetFocus(false);
-                this.SetVisible(false);
+        public void OnError (JsonObject data) {
+            Debug.LogError (string.Format ("{0} plugin OnError: {0}", GetType ().Name, data.ToJsonPrettyPrintString ()));
+            _error = data;
+            try {
+                _error = null;
+            } catch (Exception e) {
+                Debug.LogError (string.Format ("{0} plugin OnError error: {1}", GetType ().Name, e.Message));
             }
+        }
+
+        /// <summary>
+        /// Init and save new MobileInput
+        /// </summary>
+        /// <param name="receiver">Receiver</param>
+        /// <returns>Id</returns>
+        public static int Register (MobileInputReceiver receiver) {
+            int index = _instance._counter;
+            _instance._counter++;
+            _instance._inputs[index] = receiver;
+            return index;
+        }
+
+        /// <summary>
+        /// Remove MobileInput
+        /// </summary>
+        /// <param name="id">Input id</param>
+        public static void RemoveReceiver (int id) {
+            _instance._inputs.Remove (id);
+        }
+
+        /// <summary>
+        /// Get MobileInput by index
+        /// </summary>
+        /// <param name="id">Input id</param>
+        /// <returns>Receiver</returns>
+        public static MobileInputReceiver GetReceiver (int id) {
+            return _instance._inputs[id];
+        }
+
+        /// <summary>
+        /// Send data to plugin
+        /// </summary>
+        /// <param name="id">id</param>
+        /// <param name="data">json</param>
+        public static void Execute (int id, JsonObject data) {
+            data["id"] = id;
+            string json = data.ToJsonString ();
+#if UNITY_EDITOR
+            Debug.Log ("MobileInput execute " + json);
+#elif UNITY_ANDROID
+            using (AndroidJavaClass plugin = new AndroidJavaClass (string.Format (Plugins.ANDROID_CLASS_MASK, _instance.Name))) {
+                plugin.CallStatic ("execute", id, json);
+            }
+#elif UNITY_IOS
+            inputExecute (id, json);
+#endif
+        }
+
+        /// <summary>
+        /// Init plugin
+        /// </summary>
+        public static void Init () {
+            int state = PlayerPrefs.GetInt (INIT_KEY, 0);
+            if (state == 0) {
+                string path = Application.streamingAssetsPath;
+                if (Directory.Exists (path)) {
+                    string[] files = Directory.GetFiles (path, "*.ttf");
+                    foreach (string filePath in files) {
+                        PrepareFontsAssets (Path.GetFileName (filePath));
+                    }
+                }
+                PlayerPrefs.SetInt (INIT_KEY, 1);
+                PlayerPrefs.Save ();
+            }
+#if UNITY_EDITOR
+#elif UNITY_ANDROID
+            using (AndroidJavaClass plugin = new AndroidJavaClass (string.Format (Plugins.ANDROID_CLASS_MASK, _instance.Name))) {
+                plugin.CallStatic ("init");
+            }
+#elif UNITY_IOS
+            inputInit ();
+#endif
         }
 
         /// <summary>
         /// Destructor
         /// </summary>
-        protected override void OnDestroy()
-        {
-            RemoveNative();
-            base.OnDestroy();
-        }
-
-        /// <summary>
-        /// Handler for app focus lost
-        /// </summary>
-        /// <param name="hasFocus"></param>
-        private void OnApplicationFocus(bool hasFocus)
-        {
-            if (!_isMobileInputCreated || !this.Visible)
-                return;
-            this.SetVisible(hasFocus);
-        }
-
-        /// <summary>
-        /// Current InputField for external access
-        /// </summary>
-        public InputField InputField
-        {
-            get
-            {
-                return _inputObject;
+        public static void Destroy () {
+#if UNITY_EDITOR
+#elif UNITY_ANDROID
+            using (AndroidJavaClass plugin = new AndroidJavaClass (string.Format (Plugins.ANDROID_CLASS_MASK, _instance.Name))) {
+                plugin.CallStatic ("destroy");
             }
-        }
-
-        /// <summary>
-        /// Mobile input visible
-        /// </summary>
-        /// <returns>true | false</returns>
-        public bool Visible
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// Mobile input text
-        /// </summary>
-        public string Text
-        {
-            get
-            {
-                return _inputObject.text;
-            }
-            set
-            {
-                _inputObject.text = value;
-                SetTextNative(value);
-            }
-        }
-
-        /// <summary>
-        /// Initialization coroutine
-        /// </summary>
-        private IEnumerator InitialzieOnNextFrame()
-        {
-            yield return null;
-            this.PrepareNativeEdit();
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-			this.CreateNativeEdit ();
-			this.SetTextNative (this._inputObjectText.text);
-			_inputObject.placeholder.gameObject.SetActive (false);
-			_inputObjectText.enabled = false;
-			_inputObject.enabled = false;
+#elif UNITY_IOS
+            inputDestroy ();
 #endif
         }
 
         /// <summary>
-        /// Check position on each frame
-        /// If changed - send to plugin
-        /// It's need when app rotate on input field chage position
+        /// Handler to check data on focus change
         /// </summary>
-        private void Update()
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            this.UpdateForceKeyeventForAndroid ();
-#endif
-            if (this._inputObject != null && _isMobileInputCreated)
-            {
-#if UNITY_IOS
-                if (Input.GetMouseButtonDown(0) && !this._inputObjectText.rectTransform.rect.Contains(Input.mousePosition))
-                {
-                    Hide();
-                    return;
+        private void OnApplicationPause (bool pauseStatus) {
+            if (!pauseStatus) {
+                if (_data != null) {
+                    OnData (_data);
+                } else if (_error != null) {
+                    OnError (_error);
                 }
-#endif
-                SetRectNative(this._inputObjectText.rectTransform);
             }
         }
 
         /// <summary>
-        /// Get bounds and calc for current screen size
+        /// Copy files from StreamingAssets to device path
         /// </summary>
-        /// <param name="rect">recttranform</param>
-        /// <returns>rect</returns>
-        Rect GetScreenRectFromRectTransform (RectTransform rect) {
-			Vector3[] corners = new Vector3[4];
-			rect.GetWorldCorners (corners);
-			float xMin = float.PositiveInfinity;
-			float xMax = float.NegativeInfinity;
-			float yMin = float.PositiveInfinity;
-			float yMax = float.NegativeInfinity;
-			for (int i = 0; i < 4; i++) {
-				Vector3 screenCoord;
-				if (rect.GetComponentInParent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay) {
-					screenCoord = corners[i];
-				} else {
-					screenCoord = RectTransformUtility.WorldToScreenPoint(Camera.main, corners[i]);
-				}
-				if (screenCoord.x < xMin)
-					xMin = screenCoord.x;
-				if (screenCoord.x > xMax)
-					xMax = screenCoord.x;
-				if (screenCoord.y < yMin)
-					yMin = screenCoord.y;
-				if (screenCoord.y > yMax)
-					yMax = screenCoord.y;
-			}
-			Rect result = new Rect (xMin, Screen.height - yMax, xMax - xMin, yMax - yMin);
-			return result;
-		}
-
-		/// <summary>
-		/// Prepare config
-		/// </summary>
-		private void PrepareNativeEdit () {
-			Text placeHolder = _inputObject.placeholder.GetComponent<Text> ();
-			_config.Font = "Arial";
-			_config.Placeholder = placeHolder.text;
-			_config.PlaceholderColor = placeHolder.color;
-			_config.CharacterLimit = _inputObject.characterLimit;
-			Rect rect = GetScreenRectFromRectTransform (this._inputObjectText.rectTransform);
-			float ratio = rect.height / _inputObjectText.rectTransform.rect.height;
-			_config.FontSize = ((float) _inputObjectText.fontSize) * ratio;
-			_config.TextColor = _inputObjectText.color;
-			_config.Align = _inputObjectText.alignment.ToString ();
-			_config.ContentType = _inputObject.contentType.ToString ();
-			_config.BackgroundColor = _inputObject.colors.normalColor;
-			_config.Multiline = (_inputObject.lineType == InputField.LineType.SingleLine) ? false : true;
-		}
-
-		/// <summary>
-		/// Text change callback
-		/// </summary>
-		/// <param name="text">new text</param>
-		private void onTextChange (string text) {
-			if (text == this._inputObject.text)
-				return;
-			this._inputObject.text = text;
-			if (this._inputObject.onValueChanged != null) {
-				this._inputObject.onValueChanged.Invoke (text);
-			}
-		}
-
-		/// <summary>
-		/// Text change end callback
-		/// </summary>
-		/// <param name="text">text</param>
-		private void onTextEditEnd (string text) {
-			this._inputObject.text = text;
-			if (this._inputObject.onEndEdit != null) {
-				this._inputObject.onEndEdit.Invoke (text);
-			}
-			SetFocus (false);
-		}
-
-		/// <summary>
-		/// Sending data to plugin
-		/// </summary>
-		/// <param name="data">json</param>
-		public override void Direct (JsonObject data) {
-			MobileInputHandler.Plugin.StartCoroutine (PluginsMessageRoutine (data));
-		}
-
-		/// <summary>
-		/// Remove focus, keyboard when app lose focus
-		/// </summary>
-		public override void Hide () {
-			this.SetFocus (false);
-		}
-
-		/// <summary>
-		/// Coroutine for send, so its not freeze main thread
-		/// </summary>
-		/// <param name="data">json</param>
-		private IEnumerator PluginsMessageRoutine (JsonObject data) {
-			yield return null;
-			string msg = data["msg"];
-            if (msg.Equals(TEXT_CHANGE)) {
-                string text = data["text"];
-                this.onTextChange(text);
+        /// <param name="fileName">File name</param>
+        static void PrepareFontsAssets (string fileName) {
+            string folder = Application.dataPath;
+            string filepath = string.Format ("{0}/{1}", Application.persistentDataPath, fileName);
+#if UNITY_EDITOR
+            string data = string.Format ("{0}/{1}", Application.streamingAssetsPath, fileName);
+            if (File.Exists (filepath)) {
+                File.Delete (filepath);
             }
-            else if (msg.Equals(READY)) {
-                this.Ready();
+            File.Copy (data, filepath);
+#elif UNITY_ANDROID
+            using (UnityWebRequest www = UnityWebRequest.Get (string.Format ("jar:file://{0}!/assets/{1}", folder, fileName))) {
+                www.SendWebRequest ();
+                while (!www.isDone) { }
+                File.WriteAllBytes (filepath, www.downloadHandler.data);
             }
-            else if (msg.Equals(ON_FOCUS)) {
-                FocusChanged(true);
+#elif UNITY_IOS
+            string data = string.Format ("{0}/Raw/{1}", folder, fileName);
+            if (File.Exists (filepath)) {
+                File.Delete (filepath);
             }
-            else if (msg.Equals(ON_UNFOCUS)){
-                FocusChanged(false);
-            } else if (msg.Equals (TEXT_END_EDIT)) {
-				string text = data["text"];
-				this.onTextEditEnd (text);
-			} else if (msg.Equals (RETURN_PRESSED)) {
-				if (ReturnPressed != null)
-					ReturnPressed ();
-				if (OnReturnPressed != null)
-					OnReturnPressed.Invoke ();
-			}
-		}
-
-		/// <summary>
-		/// Create native input field
-		/// </summary>
-		private void CreateNativeEdit () {
-			Rect rect = GetScreenRectFromRectTransform (this._inputObjectText.rectTransform);
-			JsonObject data = new JsonObject ();
-			data["msg"] = CREATE;
-			data["x"] = rect.x / Screen.width;
-			data["y"] = rect.y / Screen.height;
-			data["width"] = rect.width / Screen.width;
-			data["height"] = rect.height / Screen.height;
-			data["character_limit"] = _config.CharacterLimit;
-			data["text_color_r"] = _config.TextColor.r;
-			data["text_color_g"] = _config.TextColor.g;
-			data["text_color_b"] = _config.TextColor.b;
-			data["text_color_a"] = _config.TextColor.a;
-			data["back_color_r"] = _config.BackgroundColor.r;
-			data["back_color_g"] = _config.BackgroundColor.g;
-			data["back_color_b"] = _config.BackgroundColor.b;
-			data["back_color_a"] = _config.BackgroundColor.a;
-			data["font"] = _config.Font;
-			data["font_size"] = _config.FontSize;
-			data["content_type"] = _config.ContentType;
-			data["align"] = _config.Align;
-            data["with_done_button"] = this.IsWithDoneButton;
-            data["with_clear_button"] = this.IsWithClearButton;
-			data["placeholder"] = _config.Placeholder;
-			data["placeholder_color_r"] = _config.PlaceholderColor.r;
-			data["placeholder_color_g"] = _config.PlaceholderColor.g;
-			data["placeholder_color_b"] = _config.PlaceholderColor.b;
-			data["placeholder_color_a"] = _config.PlaceholderColor.a;
-			data["multiline"] = _config.Multiline;
-			switch (ReturnKey) {
-				case ReturnKeyType.Next:
-					data["return_key_type"] = "Next";
-					break;
-				case ReturnKeyType.Done:
-					data["return_key_type"] = "Done";
-					break;
-				case ReturnKeyType.Search:
-					data["return_key_type"] = "Search";
-					break;
-				default:
-					data["return_key_type"] = "Default";
-					break;
-			}
-			switch (Type) {
-				case InputType.AutoCorrect:
-					data["input_type"] = "AutoCorrect";
-					break;
-				case InputType.Password:
-					data["input_type"] = "Password";
-					break;
-			}
-			switch (Keyboard) {
-				case KeyboardType.ASCIICapable:
-					data["keyboard_type"] = "ASCIICapable";
-					break;
-				case KeyboardType.EmailAddress:
-					data["keyboard_type"] = "EmailAddress";
-					break;
-				case KeyboardType.NamePhonePad:
-					data["keyboard_type"] = "NamePhonePad";
-					break;
-				case KeyboardType.NumberPad:
-					data["keyboard_type"] = "NumberPad";
-					break;
-				case KeyboardType.NumbersAndPunctuation:
-					data["keyboard_type"] = "NumbersAndPunctuation";
-					break;
-				case KeyboardType.PhonePad:
-					data["keyboard_type"] = "PhonePad";
-					break;
-				case KeyboardType.URL:
-					data["keyboard_type"] = "URL";
-					break;
-			}
-			this.Execute (data);
-		}
-
-		/// <summary>
-		/// New field successfully added
-		/// </summary>
-		void Ready () {
-			_isMobileInputCreated = true;
-			if (!_isVisibleOnCreate)
-				SetVisible (false);
-			if (_isFocusOnCreate)
-				SetFocus (true);
-		}
-
-		/// <summary>
-		/// Set text to field
-		/// </summary>
-		/// <param name="text">string</param>
-		void SetTextNative (string text) {
-			JsonObject data = new JsonObject ();
-			data["msg"] = SET_TEXT;
-			data["text"] = text;
-			this.Execute (data);
-		}
-
-		/// <summary>
-		/// Remove field
-		/// </summary>
-		private void RemoveNative () {
-			JsonObject data = new JsonObject ();
-			data["msg"] = REMOVE;
-			this.Execute (data);
-		}
-
-		/// <summary>
-		/// Set new size and position
-		/// </summary>
-		/// <param name="inputRect">RectTransform</param>
-		public void SetRectNative (RectTransform inputRect) {
-			Rect rect = GetScreenRectFromRectTransform (inputRect);
-			if (_lastRect == rect) {
-				return;
-			}
-			_lastRect = rect;
-			JsonObject data = new JsonObject ();
-			data["msg"] = SET_RECT;
-			data["x"] = rect.x / Screen.width;
-			data["y"] = rect.y / Screen.height;
-			data["width"] = rect.width / Screen.width;
-			data["height"] = rect.height / Screen.height;
-			this.Execute (data);
-		}
-
-		/// <summary>
-		/// Set focus on field
-		/// </summary>
-		/// <param name="isFocus">true | false</param>
-		public void SetFocus (bool isFocus) {
-#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-			if (!_isMobileInputCreated) {
-				_isFocusOnCreate = isFocus;
-				return;
-			}
-			JsonObject data = new JsonObject ();
-			data["msg"] = SET_FOCUS;
-			data["is_focus"] = isFocus;
-			this.Execute (data);
-#else
-			if (gameObject.activeInHierarchy) {
-				if (isFocus)
-					_inputObject.ActivateInputField ();
-				else
-					_inputObject.DeactivateInputField ();
-			} else
-				_isFocusOnCreate = isFocus;
+            File.Copy (data, filepath);
 #endif
+        }
 
-		}
+        /// <summary>
+        /// Handler on app focus
+        /// </summary>
+        void OnApplicationFocus (bool focusStatus) {
+            if (!focusStatus) {
+                foreach (var item in _instance._inputs.Values) {
+                    item.Hide ();
+                }
+            }
+        }
 
-		/// <summary>
-		/// Set field visible
-		/// </summary>
-		/// <param name="isVisible">true | false</param>
-		public void SetVisible (bool isVisible) {
-			if (!_isMobileInputCreated) {
-				_isVisibleOnCreate = isVisible;
-				return;
-			}
-			JsonObject data = new JsonObject ();
-			data["msg"] = SET_VISIBLE;
-			data["is_visible"] = isVisible;
-			this.Execute (data);
-			this.Visible = isVisible;
-		}
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-
-		/// <summary>
-		/// Send android button state
-		/// </summary>
-		/// <param name="key">код</param>
-		private void ForceSendKeydownAndroid (string key) {
-			JsonObject data = new JsonObject ();
-			data["msg"] = ANDROID_KEY_DOWN;
-			data["key"] = key;
-			this.Execute (data);
-		}
-
-		/// <summary>
-		/// Keyboard handler
-		/// </summary>
-		private void UpdateForceKeyeventForAndroid () {
-			if (UnityEngine.Input.anyKeyDown) {
-				if (UnityEngine.Input.GetKeyDown (KeyCode.Backspace)) {
-					this.ForceSendKeydownAndroid ("backspace");
-				} else {
-					foreach (char c in UnityEngine.Input.inputString) {
-						if (c == '\n') {
-							this.ForceSendKeydownAndroid ("enter");
-						} else {
-							this.ForceSendKeydownAndroid (UnityEngine.Input.inputString);
-						}
-					}
-				}
-			}
-		}
-#endif
-	}
+    }
 
 }

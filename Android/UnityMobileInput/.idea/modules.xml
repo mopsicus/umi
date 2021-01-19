@@ -2,9 +2,14 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/UnityMobileInput.iml" filepath="$PROJECT_DIR$/UnityMobileInput.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mobileinput/mobileinput.iml" filepath="$PROJECT_DIR$/mobileinput/mobileinput.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Android.UnityMobileInput.iml" filepath="$PROJECT_DIR$/.idea/modules/Android.UnityMobileInput.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Android.UnityMobileInput.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Android.UnityMobileInput.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/Android.UnityMobileInput.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/Android.UnityMobileInput.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mobileinput/Android.UnityMobileInput.mobileinput.iml" filepath="$PROJECT_DIR$/.idea/modules/mobileinput/Android.UnityMobileInput.mobileinput.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/UnityMobileInput.iml" filepath="$PROJECT_DIR$/.idea/modules/UnityMobileInput.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/UnityMobileInput.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/UnityMobileInput.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/common/UnityMobileInput.common.iml" filepath="$PROJECT_DIR$/.idea/modules/common/UnityMobileInput.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mobileinput/UnityMobileInput.mobileinput.iml" filepath="$PROJECT_DIR$/.idea/modules/mobileinput/UnityMobileInput.mobileinput.iml" />
     </modules>
   </component>
 </project>

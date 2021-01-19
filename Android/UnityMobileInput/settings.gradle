@@ -1,1 +1,1 @@
-include ':app', ':mobileinput'
+include ':app', ':mobileinput', ':common'
