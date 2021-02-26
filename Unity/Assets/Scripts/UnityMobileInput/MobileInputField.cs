@@ -44,7 +44,8 @@ namespace Mopsicus.Plugins {
             Default,
             Next,
             Done,
-            Search
+            Search,
+            Send
         }
 
         /// <summary>

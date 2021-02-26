@@ -273,6 +273,8 @@ public class MobileInput {
                 imeOptions |= EditorInfo.IME_ACTION_DONE;
             } else if (returnKeyType.equals("Search")) {
                 imeOptions |= EditorInfo.IME_ACTION_SEARCH;
+            } else if (returnKeyType.equals("Send")) {
+                imeOptions |= EditorInfo.IME_ACTION_SEND;
             }
             edit.setImeOptions(imeOptions);
             edit.setGravity(gravity);

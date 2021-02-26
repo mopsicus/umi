@@ -85,7 +85,7 @@ namespace Mopsicus.Plugins {
             EditorGUI.BeginChangeCheck ();
             GUILayout.Space (OFFSET);
             GUILayout.Label ("Select type for Return button:");
-            _target.ReturnKey = (MobileInputField.ReturnKeyType) GUILayout.Toolbar ((int) _target.ReturnKey, new string[] { "Default", "Next", "Done", "Search" });
+            _target.ReturnKey = (MobileInputField.ReturnKeyType) GUILayout.Toolbar ((int) _target.ReturnKey, new string[] { "Default", "Next", "Done", "Search", "Send" });
             GUILayout.Space (OFFSET);
             GUILayout.Label ("Options:");
             GUILayout.Space (SPACE);
