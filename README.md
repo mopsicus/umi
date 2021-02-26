@@ -10,7 +10,7 @@ You can use default InputField UI component on iOS and Android `without addition
 1. Native input field and keyboard on iOS and Android
 2. Hiding additional mobile input box (Android)
 3. Show "Done", "Clear" buttons (iOS)
-4. Return button type: Default, Next, Done, Search 
+4. Return button type: Default, Next, Done, Search, Send 
 5. Custom fonts support
 
 ## How to use
