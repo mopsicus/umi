@@ -391,6 +391,8 @@ BOOL multiline;
         returnKeyType = UIReturnKeyDone;
     } else if ([returnKeyTypeString isEqualToString:@"Search"]) {
         returnKeyType = UIReturnKeySearch;
+    } else if ([returnKeyTypeString isEqualToString:@"Send"]) {
+        returnKeyType = UIReturnKeySend;
     }
     fontSize = fontSize / [UIScreen mainScreen].scale;
     UIFont *uiFont = [UIFont systemFontOfSize:fontSize];
