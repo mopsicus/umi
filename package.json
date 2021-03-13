@@ -1,0 +1,28 @@
+{
+	"name": "ru.mopsicus.mobileinput",
+	"displayName":"Unity Mobile Input",
+	"version": "1.0.0",
+	"unity": "2019.4",
+	"description": "Unity mobile Input plugin for iOS and Android (Unity UI compatible)",
+	"author": {
+		"name": "Igor"
+	},
+	"contributors": [
+		{
+			"name": "Romain Théry"
+		}
+	],
+	"dependencies": {
+	},
+	"repository": {
+		"url": "https://github.com/mopsicus/UnityMobileInput.git",
+		"type": "git"
+	},
+	"samples": [
+	{
+	 "displayName": "Demo",
+	 "description": "A demo scene to experiment with the MobileInputField class",
+	 "path": "Samples~/Demo"
+	}
+ ]
+}
