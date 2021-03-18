@@ -303,8 +303,9 @@ namespace Mopsicus.Plugins {
 #if !UNITY_EDITOR
                 int touchCount = Input.touchCount;
                 if (touchCount > 0) {
+                    Rect inputRect = this._inputObjectText.rectTransform.rect;
                     for (int i = 0; i < touchCount; i++) {
-                        if (!this._inputObjectText.rectTransform.rect.Contains (Input.GetTouch(i).position)) {
+                        if (!inputRect.Contains (Input.GetTouch(i).position)) {
                             if (!IsManualHideControl) {
                                 Hide ();
                             }
