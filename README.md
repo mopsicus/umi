@@ -6,12 +6,16 @@ You can use default InputField UI component on iOS and Android `without addition
 
 > It's deep refactor and bug fix of UnityNativeEdit (https://github.com/kmbang/UnityNativeEdit)
 
+## Installation
+Add url `https://github.com/mopsicus/UnityMobileInput.git` to Package Manager, or add the following line to Packages/manifest.json: `"ru.mopsicus.mobileinput": "https://github.com/mopsicus/UnityMobileInput.git"`
+
 ## Features
 1. Native input field and keyboard on iOS and Android
 2. Hiding additional mobile input box (Android)
 3. Show "Done", "Clear" buttons (iOS)
-4. Return button type: Default, Next, Done, Search, Send 
-5. Custom fonts support
+4. Return button type: Default, Next, Done, Search, Send
+5. Detect keyboard show/hide (with height) 
+6. Custom fonts support
 
 ## How to use
 1. Copy the files into your existing unity project asset folder
