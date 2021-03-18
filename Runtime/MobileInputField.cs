@@ -299,7 +299,7 @@ namespace Mopsicus.Plugins {
 #if UNITY_ANDROID && !UNITY_EDITOR
             this.UpdateForceKeyeventForAndroid ();
 #endif
-            if (this._inputObject != null && _isMobileInputCreated) {
+            if (_isMobileInputCreated && this._inputObject != null) {
 #if !UNITY_EDITOR
                 if (Input.touchCount > 0) {
                     for (int i = 0; i < Input.touches.Length; i++) {
