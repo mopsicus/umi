@@ -493,6 +493,9 @@ namespace Mopsicus.Plugins {
                 case ReturnKeyType.Search:
                     data["return_key_type"] = "Search";
                     break;
+                case ReturnKeyType.Send:
+                    data["return_key_type"] = "Send";
+                    break;
                 default:
                     data["return_key_type"] = "Default";
                     break;
