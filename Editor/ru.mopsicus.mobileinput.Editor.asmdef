@@ -1,0 +1,10 @@
+{
+    "name": "ru.mopsicus.mobileinput.Editor",
+    "references": [
+      "ru.mopsicus.mobileinput"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
