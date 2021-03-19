@@ -299,11 +299,13 @@ namespace Mopsicus.Plugins {
 #if UNITY_ANDROID && !UNITY_EDITOR
             this.UpdateForceKeyeventForAndroid ();
 #endif
-            if (this._inputObject != null && _isMobileInputCreated) {
+            if (_isMobileInputCreated && this._inputObject != null) {
 #if !UNITY_EDITOR
-                if (Input.touchCount > 0) {
-                    for (int i = 0; i < Input.touches.Length; i++) {
-                        if (!this._inputObjectText.rectTransform.rect.Contains (Input.touches[i].position)) {
+                int touchCount = Input.touchCount;
+                if (touchCount > 0) {
+                    Rect inputRect = this._inputObjectText.rectTransform.rect;
+                    for (int i = 0; i < touchCount; i++) {
+                        if (!inputRect.Contains (Input.GetTouch(i).position)) {
                             if (!IsManualHideControl) {
                                 Hide ();
                             }
