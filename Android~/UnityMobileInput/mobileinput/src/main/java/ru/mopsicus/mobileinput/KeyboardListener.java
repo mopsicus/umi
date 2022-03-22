@@ -13,7 +13,13 @@ import ru.mopsicus.common.Common;
 
 public class KeyboardListener implements KeyboardObserver {
 
-    private boolean isPreviousState = false;
+    private boolean previousKeyboardShowState = false;
+
+    /**
+     * Previous keyboard height to indicate if the keyboard height changed
+     */
+    private int previousKeyboardHeight = -1;
+
     private Common common = new Common();
 
     @Override
@@ -24,9 +30,13 @@ public class KeyboardListener implements KeyboardObserver {
             json.put("msg", Plugin.KEYBOARD_ACTION);
             json.put("show", isShow);
             json.put("height", height);
-        } catch (JSONException e) {}
-        if (isPreviousState != isShow) {
-            isPreviousState = isShow;
+        } catch (JSONException e) {
+
+        }
+
+        if (previousKeyboardShowState != isShow || previousKeyboardHeight != keyboardHeight) {
+            previousKeyboardShowState = isShow;
+            previousKeyboardHeight = keyboardHeight;
             common.sendData(Plugin.name, json.toString());
         }
     }
