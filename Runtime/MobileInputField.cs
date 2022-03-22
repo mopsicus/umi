@@ -309,7 +309,7 @@ namespace Mopsicus.Plugins {
                             if (!IsManualHideControl) {
                                 Hide ();
                             }
-                            return;
+                            break;
                         }
                     }
                 }
