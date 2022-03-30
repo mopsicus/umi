@@ -213,6 +213,7 @@ namespace Mopsicus.Plugins {
         /// </summary>
         private void OnEnable () {
             if (_isMobileInputCreated) {
+                SetRectNative (this._inputObjectText.rectTransform);
                 this.SetVisible (true);
             }
         }
