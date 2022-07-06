@@ -340,8 +340,11 @@ namespace Mopsicus.Plugins {
 			float yMax = float.NegativeInfinity;
 			for (int i = 0; i < 4; i++) {
 				Vector3 screenCoord;
-				if (rect.GetComponentInParent<Canvas> ().renderMode == RenderMode.ScreenSpaceOverlay) {
+				Canvas canvas = rect.GetComponentInParent<Canvas> ();
+				if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) {
 					screenCoord = corners[i];
+				} else if (canvas.renderMode == RenderMode.ScreenSpaceCamera) {
+					screenCoord = canvas.worldCamera.WorldToScreenPoint (corners[i]);
 				} else {
 					screenCoord = RectTransformUtility.WorldToScreenPoint (Camera.main, corners[i]);
 				}
