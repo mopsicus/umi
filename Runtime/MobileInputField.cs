@@ -92,6 +92,11 @@ namespace Mopsicus.Plugins {
         /// Mobile input creation flag
         /// </summary>
         private bool _isMobileInputCreated = false;
+	
+        /// <summary>
+        /// Mobile input first creation flag
+        /// </summary>
+	private bool _isFirstCreation = true;
 
         /// <summary>
         /// InputField object
@@ -206,6 +211,7 @@ namespace Mopsicus.Plugins {
         protected override void Start () {
             base.Start ();
             StartCoroutine (InitialzieOnNextFrame ());
+	    _isFirstCreation = false;
         }
 
         /// <summary>
@@ -214,7 +220,9 @@ namespace Mopsicus.Plugins {
         private void OnEnable () {
             if (_isMobileInputCreated) {
                 this.SetVisible (true);
-            }
+            } else if (!_isFirstCreation) {
+            	StartCoroutine (InitialzieOnNextFrame ());
+	    }
         }
 
         /// <summary>
@@ -539,6 +547,7 @@ namespace Mopsicus.Plugins {
         private void RemoveNative () {
             JsonObject data = new JsonObject ();
             data["msg"] = REMOVE;
+	    _isMobileInputCreated = false;
             this.Execute (data);
         }
 
