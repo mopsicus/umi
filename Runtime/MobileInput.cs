@@ -240,7 +240,7 @@ namespace Mopsicus.Plugins {
             data["id"] = id;
             string json = data.ToJsonString ();
 #if UNITY_EDITOR
-            Debug.Log ("MobileInput execute " + json);
+            //Debug.Log ("MobileInput execute " + json);
 #elif UNITY_ANDROID
             using (AndroidJavaClass plugin = new AndroidJavaClass (string.Format (Plugins.ANDROID_CLASS_MASK, _instance.Name))) {
                 plugin.CallStatic ("execute", id, json);
