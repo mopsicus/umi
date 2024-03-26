@@ -72,17 +72,3 @@ crashlytics-build.properties
 
 # MacOS meta data
 .DS_Store
-
-# All in Runtime folder
-!/[Rr]untime/*.meta
-!/[Rr]untime/**/*.meta
-Editor/*.meta
-Plugins/Android/*.meta
-Plugins/iOS/*.meta
-Plugins/Android.meta
-Plugins/iOS.meta
-CHANGELOG.md.meta
-README.md.meta
-Editor.meta
-Runtime.meta
-Plugins.meta
