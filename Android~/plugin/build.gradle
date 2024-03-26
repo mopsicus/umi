@@ -1,0 +1,45 @@
+plugins {
+    alias(libs.plugins.androidLibrary)
+}
+
+android {
+    namespace 'com.mopsicus.umi'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    tasks.register('copyAAR', Copy) {
+        from 'build/outputs/aar'
+        into '../!Releases'
+        include '**/*-release.aar'
+        rename project.name + '-release.aar', 'MobileInput.aar'
+    }
+
+    afterEvaluate {
+        assemble.finalizedBy(copyAAR)
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    compileOnly fileTree(dir: 'libs', includes: ['*.jar'])
+    implementation libs.appcompat.v7
+    androidTestImplementation libs.runner
+    androidTestImplementation libs.espresso.core
+}

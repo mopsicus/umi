@@ -1,28 +1,44 @@
 {
-	"name": "ru.mopsicus.mobileinput",
-	"displayName":"Unity Mobile Input",
-	"version": "1.0.0",
-	"unity": "2019.4",
-	"description": "Unity mobile Input plugin for iOS and Android (Unity UI compatible)",
-	"author": {
-		"name": "mopsicus.ru"
-	},
-	"contributors": [
-		{
-			"name": "Romain Théry"
-		}
-	],
-	"dependencies": {
-	},
-	"repository": {
-		"url": "https://github.com/mopsicus/UnityMobileInput.git",
-		"type": "git"
-	},
-	"samples": [
-	{
-	 "displayName": "Demo",
-	 "description": "A demo scene to experiment with the MobileInputField class",
-	 "path": "Samples~/Demo"
-	}
- ]
-}
+    "name": "com.mopsicus.umi",
+    "version": "2.0.0",
+    "displayName": "UMI",
+    "description": "UMI – Unity plugin for Android and iOS, allows to use features of mobile native input fields.",
+    "license": "MIT",
+    "author": "Mopsicus <mail@mopsicus.ru>",
+    "homepage": "https://github.com/mopsicus/umi",
+    "changelogUrl": "https://github.com/mopsicus/umi/blob/main/CHANGELOG.md",
+    "documentationUrl": "https://github.com/mopsicus/umi/blob/main/Documentation~/index.md",
+    "unity": "2020.3",
+    "keywords": [
+      "input",
+      "mobile",
+      "inputfield",
+      "select",
+      "emoji",
+      "unity",
+      "native",
+      "textarea",
+      "ios",
+      "textmeshpro",
+      "android",
+      "tmpro",
+      "plugin"
+    ],
+    "contributors": [
+      {
+        "name": "Romain Théry"
+      }
+    ],    
+    "dependencies": {},
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/mopsicus/umi.git"
+    },  
+    "samples": [
+      {
+        "displayName": "Demo",
+        "description": "A demo scene to show UMI usage",
+        "path": "Samples~/Demo"
+      }
+    ]
+  }

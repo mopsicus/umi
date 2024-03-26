@@ -1,29 +1,39 @@
-// ----------------------------------------------------------------------------
-// The MIT License
-// UnityMobileInput https://github.com/mopsicus/UnityMobileInput
-// Copyright (c) 2018-2020 Mopsicus <mail@mopsicus.ru>
-// ----------------------------------------------------------------------------
-
 using System;
 using System.Collections;
-using NiceJson;
+using System.Globalization;
+using TMPro;
 using UnityEngine;
+using NiceJson;
 using UnityEngine.Events;
-using UnityEngine.UI;
 
-namespace Mopsicus.Plugins {
+namespace UMI {
 
     /// <summary>
-    /// Wrapper for Unity InputField
-    /// Add this component on your InputField
+    /// Content type
     /// </summary>
-    [RequireComponent (typeof (InputField))]
+    public enum InputContentType {
+        Standard,
+        Autocorrected,
+        IntegerNumber,
+        DecimalNumber,
+        Alphanumeric,
+        Name,
+        EmailAddress,
+        Password,
+        Pin
+    }
+
+    /// <summary>
+    /// Wrapper for Unity TMP_InputField
+    /// Add this component on your TMP_InputField
+    /// </summary>
+    [RequireComponent(typeof(TMP_InputField))]
     public class MobileInputField : MobileInputReceiver {
 
         /// <summary>
         /// Config structure
         /// </summary>
-        private struct MobileInputConfig {
+        struct MobileInputConfig {
             public bool Multiline;
             public Color TextColor;
             public Color BackgroundColor;
@@ -48,90 +58,22 @@ namespace Mopsicus.Plugins {
             Send
         }
 
-        /// <summary>
-        /// Custom font name
-        /// </summary>
-        public string CustomFont = "default";        
-
-        /// <summary>
-        /// Hide and deselect input manually
-        /// </summary>
-        public bool IsManualHideControl = false;
-
-        /// <summary>
-        /// "Done" button visible (for iOS)
-        /// </summary>
-        public bool IsWithDoneButton = true;
-
-        /// <summary>
-        /// "(x)" button visible (for iOS)
-        /// </summary>
-        public bool IsWithClearButton = true;
-
-        /// <summary>
-        /// Type for return button
-        /// </summary>
-        public ReturnKeyType ReturnKey;
-
-        /// <summary>
-        /// Action when Return pressed, for subscribe
-        /// </summary>
-        public Action OnReturnPressed = delegate { };
-
-        /// <summary>
-        /// Action when Focus changed
-        /// </summary>
-        public Action<bool> OnFocusChanged = delegate { };
-
-        /// <summary>
-        /// Event when Return pressed, for Unity inspector
-        /// </summary>
-        public UnityEvent OnReturnPressedEvent;
-
-        /// <summary>
-        /// Mobile input creation flag
-        /// </summary>
-        private bool _isMobileInputCreated = false;
-	
-        /// <summary>
-        /// Mobile input first creation flag
-        /// </summary>
-	private bool _isFirstCreation = true;
-
-        /// <summary>
-        /// InputField object
-        /// </summary>
-        private InputField _inputObject;
-
-        /// <summary>
-        /// Text object from _inputObject
-        /// </summary>
-        private Text _inputObjectText;
-
-        /// <summary>
-        /// Set focus on create flag
-        /// </summary>
-        private bool _isFocusOnCreate;
-
-        /// <summary>
-        /// Set visible on create flag
-        /// </summary>
-        private bool _isVisibleOnCreate = true;
-
-        /// <summary>
-        /// Last field position cache
-        /// </summary>
-        private Rect _lastRect;
-
-        /// <summary>
-        /// Current config
-        /// </summary>
-        private MobileInputConfig _config;
-
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         /// <summary>
         /// InputField create event
         /// </summary>
         const string CREATE = "CREATE_EDIT";
+
+        /// <summary>
+        /// Set focus to InputField
+        /// </summary>
+        const string SET_FOCUS = "SET_FOCUS";
+#endif
+
+        /// <summary>
+        /// WaitForEndOfFrame
+        /// </summary>
+        static readonly WaitForEndOfFrame WaitForEndOfFrame = null;
 
         /// <summary>
         /// InputField remove event
@@ -144,14 +86,34 @@ namespace Mopsicus.Plugins {
         const string SET_TEXT = "SET_TEXT";
 
         /// <summary>
+        /// Set input content type
+        /// </summary>
+        const string SET_CONTENT_TYPE = "SET_CONTENT_TYPE";
+
+        /// <summary>
+        /// Set text color
+        /// </summary>
+        const string SET_TEXT_COLOR = "SET_TEXT_COLOR";
+
+        /// <summary>
+        /// Set placeholder text color
+        /// </summary>
+        const string SET_PTEXT_COLOR = "SET_PTEXT_COLOR";
+
+        /// <summary>
+        /// Set background color
+        /// </summary>
+        const string SET_BG_COLOR = "SET_BG_COLOR";
+
+        /// <summary>
+        /// Set read only state
+        /// </summary>
+        const string SET_READ_ONLY = "SET_READ_ONLY";
+
+        /// <summary>
         /// Set new Rect, position, size
         /// </summary>
         const string SET_RECT = "SET_RECT";
-
-        /// <summary>
-        /// Set focus to InputField
-        /// </summary>
-        const string SET_FOCUS = "SET_FOCUS";
 
         /// <summary>
         /// Event when InputField is focused
@@ -178,10 +140,12 @@ namespace Mopsicus.Plugins {
         /// </summary>
         const string TEXT_END_EDIT = "TEXT_END_EDIT";
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         /// <summary>
         /// Event for Android
         /// </summary>
         const string ANDROID_KEY_DOWN = "ANDROID_KEY_DOWN";
+#endif
 
         /// <summary>
         /// Event when Return key pressed
@@ -194,13 +158,110 @@ namespace Mopsicus.Plugins {
         const string READY = "READY";
 
         /// <summary>
+        /// Custom font name
+        /// </summary>
+        public string CustomFont = "default";
+
+        /// <summary>
+        /// Background color
+        /// </summary>
+        public Color BackgroundColor = Color.white;
+
+        /// <summary>
+        /// Hide and deselect input manually
+        /// </summary>
+        public bool IsManualHideControl = false;
+
+        /// <summary>
+        /// "Done" button visible (for iOS)
+        /// </summary>
+        public bool IsWithDoneButton = false;
+
+        /// <summary>
+        /// "(x)" button visible (for iOS)
+        /// </summary>
+        public bool IsWithClearButton = false;
+
+        /// <summary>
+        /// Type for return button
+        /// </summary>
+        public ReturnKeyType ReturnKey = ReturnKeyType.Default;
+
+        /// <summary>
+        /// Action when Return pressed, for subscribe
+        /// </summary>
+        public Action OnReturnPressed = delegate { };
+
+        /// <summary>
+        /// Action when Focus changed
+        /// </summary>
+        public Action<bool> OnFocusChanged = delegate { };
+
+        /// <summary>
+        /// Event when Return pressed, for Unity inspector
+        /// </summary>
+        public UnityEvent OnReturnPressedEvent = null;
+
+        /// <summary>
+        /// Mobile input creation flag
+        /// </summary>
+        bool _isMobileInputCreated = false;
+
+        /// <summary>
+        /// Mobile input first creation flag
+        /// </summary>
+        bool _isFirstCreation = true;
+
+        /// <summary>
+        /// InputField object
+        /// </summary>
+        TMP_InputField _inputObject = null;
+
+        /// <summary>
+        /// Text object from _inputObject
+        /// </summary>
+        TMP_Text _inputObjectText = null;
+
+        /// <summary>
+        /// Set focus on create flag
+        /// </summary>
+        bool _isFocusOnCreate = false;
+
+        /// <summary>
+        /// Set visible on create flag
+        /// </summary>
+        bool _isVisibleOnCreate = true;
+
+        /// <summary>
+        /// Last field position cache
+        /// </summary>
+        Rect _lastRect = new Rect();
+
+        /// <summary>
+        /// Current config
+        /// </summary>
+        MobileInputConfig _config = new MobileInputConfig();
+
+        /// <summary>
+        /// Cache for string before create
+        /// </summary>
+        string _textOnCreate = null;
+
+        /// <summary>
+        /// Change , to . for float
+        /// </summary>
+        CultureInfo _cultureInfo = CultureInfo.InvariantCulture;
+
+        /// <summary>
         /// Constructor
         /// </summary>
-        private void Awake () {
-            _inputObject = this.GetComponent<InputField> ();
-            if ((object) _inputObject == null) {
-                Debug.LogError (string.Format ("No found InputField for {0} MobileInput", this.name));
-                throw new MissingComponentException ();
+        void Awake() {
+            _inputObject = GetComponent<TMP_InputField>();
+            if ((object)_inputObject == null) {
+#if UMI_DEBUG
+                Debug.LogError($"[UMI] no found InputField for {this.name} MobileInput");
+#endif
+                throw new MissingComponentException();
             }
             _inputObjectText = _inputObject.textComponent;
         }
@@ -208,55 +269,66 @@ namespace Mopsicus.Plugins {
         /// <summary>
         /// Create mobile input on Start with coroutine
         /// </summary>
-        protected override void Start () {
-            base.Start ();
-            StartCoroutine (InitialzieOnNextFrame ());
-	    _isFirstCreation = false;
+        protected override void Start() {
+            base.Start();
+            StartCoroutine(InitProcess());
+            _isFirstCreation = false;
         }
 
         /// <summary>
         /// Show native on enable
         /// </summary>
-        private void OnEnable () {
+        void OnEnable() {
             if (_isMobileInputCreated) {
-                this.SetVisible (true);
+                SetRect(this._inputObjectText.rectTransform);
+                SetVisible(true);
             } else if (!_isFirstCreation) {
-            	StartCoroutine (InitialzieOnNextFrame ());
-	    }
+                StartCoroutine(InitProcess());
+            }
         }
 
         /// <summary>
         /// Hide native on disable
         /// </summary>
-        private void OnDisable () {
+        void OnDisable() {
             if (_isMobileInputCreated) {
-                this.SetFocus (false);
-                this.SetVisible (false);
+                SetFocus(false);
+                SetVisible(false);
             }
         }
 
         /// <summary>
         /// Destructor
         /// </summary>
-        protected override void OnDestroy () {
-            RemoveNative ();
-            base.OnDestroy ();
+        protected override void OnDestroy() {
+            RemoveNative();
+            base.OnDestroy();
         }
 
         /// <summary>
         /// Handler for app focus lost
         /// </summary>
-        private void OnApplicationFocus (bool hasFocus) {
-            if (!_isMobileInputCreated || !this.Visible) {
+        void OnApplicationFocus(bool hasFocus) {
+            if (!_isMobileInputCreated || !Visible) {
                 return;
             }
-            this.SetVisible (hasFocus);
+            SetVisible(hasFocus);
+        }
+
+        /// <summary>
+        /// Handler for app focus lost
+        /// </summary>
+        void OnApplicationPause(bool hasPause) {
+            if (!_isMobileInputCreated || !Visible) {
+                return;
+            }
+            SetVisible(!hasPause);
         }
 
         /// <summary>
         /// Current InputField for external access
         /// </summary>
-        public InputField InputField {
+        public TMP_InputField InputField {
             get {
                 return _inputObject;
             }
@@ -275,24 +347,34 @@ namespace Mopsicus.Plugins {
         /// </summary>
         public string Text {
             get {
-                return _inputObject.text;
+                return (_inputObject == null) ? string.Empty : _inputObject.text;
             }
             set {
+                if (!_isMobileInputCreated) {
+                    _textOnCreate = value;
+                    return;
+                }
                 _inputObject.text = value;
-                SetTextNative (value);
+                SetTextNative(value);
             }
         }
 
         /// <summary>
-        /// Initialization coroutine
+        /// Initialization
         /// </summary>
-        private IEnumerator InitialzieOnNextFrame () {
-            yield return null;
-            this.PrepareNativeEdit ();
+        IEnumerator InitProcess() {
+            yield return WaitForEndOfFrame;
+            PrepareNativeEdit();
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-            this.CreateNativeEdit ();
-            this.SetTextNative (this._inputObjectText.text);
-            _inputObject.placeholder.gameObject.SetActive (false);
+            CreateNativeEdit();
+            var data = this._inputObjectText.text.Trim();
+            if (data.Length == 1) {
+                var category = Char.GetUnicodeCategory(data[0]);
+                if (category != UnicodeCategory.Format) {
+                    this.SetTextNative(this._inputObjectText.text);
+                }
+            }
+            _inputObject.placeholder.gameObject.SetActive(false);
             _inputObject.enabled = false;
             _inputObjectText.enabled = false;
 #endif
@@ -303,171 +385,164 @@ namespace Mopsicus.Plugins {
         /// If changed - send to plugin
         /// It's need when app rotate on input field chage position
         /// </summary>
-        private void Update () {
+        void Update() {
 #if UNITY_ANDROID && !UNITY_EDITOR
-            this.UpdateForceKeyeventForAndroid ();
+            UpdateForceKeyeventForAndroid();
 #endif
-            if (_isMobileInputCreated && this._inputObject != null) {
+            if (_inputObject != null && _isMobileInputCreated) {
 #if !UNITY_EDITOR
-                int touchCount = Input.touchCount;
+                var touchCount = Input.touchCount;
                 if (touchCount > 0) {
-                    Rect inputRect = this._inputObjectText.rectTransform.rect;
-                    for (int i = 0; i < touchCount; i++) {
-                        if (!inputRect.Contains (Input.GetTouch(i).position)) {
+                    var inputRect = this._inputObjectText.rectTransform.rect;
+                    for (var i = 0; i < touchCount; i++) {
+                        if (!inputRect.Contains(Input.touches[i].position)) {
                             if (!IsManualHideControl) {
-                                Hide ();
+                                Hide();
                             }
                             return;
                         }
                     }
                 }
 #endif
-                SetRectNative (this._inputObjectText.rectTransform);
+                SetRect(_inputObjectText.rectTransform);
             }
         }
-
-		/// <summary>
-		/// Get sizes and convert to current screen size
-		/// </summary>
-		/// <param name="rect">RectTranform from Gameobject</param>
-		/// <returns>Rect</returns>
-		public static Rect GetScreenRectFromRectTransform (RectTransform rect) {
-			Vector3[] corners = new Vector3[4];
-			rect.GetWorldCorners (corners);
-			float xMin = float.PositiveInfinity;
-			float xMax = float.NegativeInfinity;
-			float yMin = float.PositiveInfinity;
-			float yMax = float.NegativeInfinity;
-			for (int i = 0; i < 4; i++) {
-				Vector3 screenCoord;
-				Canvas canvas = rect.GetComponentInParent<Canvas> ();
-				if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) {
-					screenCoord = corners[i];
-				} else if (canvas.renderMode == RenderMode.ScreenSpaceCamera) {
-					screenCoord = canvas.worldCamera.WorldToScreenPoint (corners[i]);
-				} else {
-					screenCoord = RectTransformUtility.WorldToScreenPoint (Camera.main, corners[i]);
-				}
-				if (screenCoord.x < xMin) {
-					xMin = screenCoord.x;
-				}
-				if (screenCoord.x > xMax) {
-					xMax = screenCoord.x;
-				}
-				if (screenCoord.y < yMin) {
-					yMin = screenCoord.y;
-				}
-				if (screenCoord.y > yMax) {
-					yMax = screenCoord.y;
-				}
-			}
-			Rect result = new Rect (xMin, Screen.height - yMax, xMax - xMin, yMax - yMin);
-			return result;
-		}        
 
         /// <summary>
         /// Prepare config
         /// </summary>
-        private void PrepareNativeEdit () {
-            Text placeHolder = _inputObject.placeholder.GetComponent<Text> ();
+        void PrepareNativeEdit() {
+            var placeHolder = _inputObject.placeholder.GetComponent<TextMeshProUGUI>();
             _config.Placeholder = placeHolder.text;
             _config.PlaceholderColor = placeHolder.color;
             _config.CharacterLimit = _inputObject.characterLimit;
-            Rect rect = GetScreenRectFromRectTransform (this._inputObjectText.rectTransform);
-            float ratio = rect.height / _inputObjectText.rectTransform.rect.height;
-            _config.FontSize = ((float) _inputObjectText.fontSize) * ratio;
+            var rect = GetScreenRectFromRectTransform(_inputObjectText.rectTransform);
+            var ratio = rect.height / _inputObjectText.rectTransform.rect.height;
+            _config.FontSize = ((float)_inputObjectText.fontSize) * ratio;
             _config.TextColor = _inputObjectText.color;
-            _config.Align = _inputObjectText.alignment.ToString ();
-            _config.ContentType = _inputObject.contentType.ToString ();
-            _config.BackgroundColor = _inputObject.colors.normalColor;
-            _config.Multiline = (_inputObject.lineType == InputField.LineType.SingleLine) ? false : true;
-            _config.KeyboardType = _inputObject.keyboardType.ToString ();
-            _config.InputType = _inputObject.inputType.ToString ();
+            _config.Align = _inputObjectText.alignment.ToString();
+            _config.ContentType = _inputObject.contentType.ToString();
+            _config.BackgroundColor = BackgroundColor;
+            _config.Multiline = _inputObject.lineType != TMP_InputField.LineType.SingleLine;
+            _config.KeyboardType = _inputObject.keyboardType.ToString();
+            _config.InputType = _inputObject.inputType.ToString();
+        }
+
+        /// <summary>
+        /// Get bounds and calc for current screen size
+        /// </summary>
+        /// <param name="rect">RectTranform object</param>
+        /// <returns>Rect</returns>
+        Rect GetScreenRectFromRectTransform(RectTransform rect) {
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            var xMin = float.PositiveInfinity;
+            var xMax = float.NegativeInfinity;
+            var yMin = float.PositiveInfinity;
+            var yMax = float.NegativeInfinity;
+            for (var i = 0; i < 4; i++) {
+                Vector3 coords;
+                if (rect.GetComponentInParent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay) {
+                    coords = corners[i];
+                } else {
+                    coords = RectTransformUtility.WorldToScreenPoint(Camera.main, corners[i]);
+                }
+                if (coords.x < xMin) {
+                    xMin = coords.x;
+                }
+                if (coords.x > xMax) {
+                    xMax = coords.x;
+                }
+                if (coords.y < yMin) {
+                    yMin = coords.y;
+                }
+                if (coords.y > yMax) {
+                    yMax = coords.y;
+                }
+            }
+            var result = new Rect(xMin, Screen.height - yMax, xMax - xMin, yMax - yMin);
+            return result;
         }
 
         /// <summary>
         /// Text change callback
         /// </summary>
         /// <param name="text">new text</param>
-        private void OnTextChange (string text) {
-            if (text == this._inputObject.text) {
+        void OnTextChange(string text) {
+            if (text == _inputObject.text) {
                 return;
             }
-            this._inputObject.text = text;
-            if (this._inputObject.onValueChanged != null) {
-                this._inputObject.onValueChanged.Invoke (text);
-            }
+            _inputObject.text = text;
+            _inputObject.onValueChanged?.Invoke(text);
         }
 
         /// <summary>
         /// Text change end callback
         /// </summary>
         /// <param name="text">text</param>
-        private void OnTextEditEnd (string text) {
-            this._inputObject.text = text;
-            if (this._inputObject.onEndEdit != null) {
-                this._inputObject.onEndEdit.Invoke (text);
-            }
-            SetFocus (false);
+        void OnTextEditEnd(string text) {
+            _inputObject.text = text;
+            _inputObject.onEndEdit?.Invoke(text);
+            SetFocus(false);
         }
 
         /// <summary>
         /// Sending data to plugin
         /// </summary>
         /// <param name="data">JSON</param>
-        public override void Send (JsonObject data) {
-            MobileInput.Plugin.StartCoroutine (PluginsMessageRoutine (data));
+        public override void Send(JsonObject data) {
+            StartCoroutine(SendDataProcess(data));
         }
 
         /// <summary>
         /// Remove focus, keyboard when app lose focus
         /// </summary>
-        public override void Hide () {
-            this.SetFocus (false);
+        public override void Hide() {
+            if (_inputObject != null && _isMobileInputCreated && _inputObject.isFocused) {
+                SetFocus(false);
+            }
         }
 
         /// <summary>
         /// Coroutine for send, so its not freeze main thread
         /// </summary>
         /// <param name="data">JSON</param>
-        private IEnumerator PluginsMessageRoutine (JsonObject data) {
-            yield return null;
+        IEnumerator SendDataProcess(JsonObject data) {
+            yield return WaitForEndOfFrame;
             string msg = data["msg"];
-            if (msg.Equals (TEXT_CHANGE)) {
+            if (msg.Equals(TEXT_CHANGE)) {
                 string text = data["text"];
-                this.OnTextChange (text);
-            } else if (msg.Equals (READY)) {
-                this.Ready ();
-            } else if (msg.Equals (ON_FOCUS)) {
-                OnFocusChanged (true);
-            } else if (msg.Equals (ON_UNFOCUS)) {
-                OnFocusChanged (false);
-            } else if (msg.Equals (TEXT_END_EDIT)) {
+                OnTextChange(text);
+            } else if (msg.Equals(READY)) {
+                Ready();
+            } else if (msg.Equals(ON_FOCUS)) {
+                OnFocusChanged(true);
+            } else if (msg.Equals(ON_UNFOCUS)) {
+                OnFocusChanged(false);
+            } else if (msg.Equals(TEXT_END_EDIT)) {
                 string text = data["text"];
-                this.OnTextEditEnd (text);
-            } else if (msg.Equals (RETURN_PRESSED)) {
-                OnReturnPressed ();
-                if (OnReturnPressedEvent != null) {
-                    OnReturnPressedEvent.Invoke ();
-                }
+                OnTextEditEnd(text);
+            } else if (msg.Equals(RETURN_PRESSED)) {
+                OnReturnPressed();
+                OnReturnPressedEvent?.Invoke();
             }
         }
 
-	/// <summary>
+        /// <summary>
         /// Convert float value to InvariantCulture string
         /// </summary>
         /// <param name="value">float value</param>
-        /// <returns></returns>
-        private string InvariantCultureString (float value){
-            return value.ToString ("G", System.Globalization.CultureInfo.InvariantCulture);
+        string InvariantCultureString(float value) {
+            return value.ToString("G", _cultureInfo);
         }
 
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         /// <summary>
         /// Create native input field
         /// </summary>
-        private void CreateNativeEdit () {
-            Rect rect = GetScreenRectFromRectTransform (this._inputObjectText.rectTransform);
-            JsonObject data = new JsonObject ();
+        void CreateNativeEdit() {
+            var rect = GetScreenRectFromRectTransform(_inputObjectText.rectTransform);
+            var data = new JsonObject();
             data["msg"] = CREATE;
             data["x"] = InvariantCultureString(rect.x / Screen.width);
             data["y"] = InvariantCultureString(rect.y / Screen.height);
@@ -485,111 +560,165 @@ namespace Mopsicus.Plugins {
             data["font_size"] = InvariantCultureString(_config.FontSize);
             data["content_type"] = _config.ContentType;
             data["align"] = _config.Align;
-            data["with_done_button"] = this.IsWithDoneButton;
-            data["with_clear_button"] = this.IsWithClearButton;
+            data["with_done_button"] = IsWithDoneButton;
+            data["with_clear_button"] = IsWithClearButton;
+            data["font"] = CustomFont;
             data["placeholder"] = _config.Placeholder;
             data["placeholder_color_r"] = InvariantCultureString(_config.PlaceholderColor.r);
             data["placeholder_color_g"] = InvariantCultureString(_config.PlaceholderColor.g);
             data["placeholder_color_b"] = InvariantCultureString(_config.PlaceholderColor.b);
             data["placeholder_color_a"] = InvariantCultureString(_config.PlaceholderColor.a);
             data["multiline"] = _config.Multiline;
-            data["font"] = this.CustomFont;
             data["input_type"] = _config.InputType;
             data["keyboard_type"] = _config.KeyboardType;
-            switch (ReturnKey) {
-                case ReturnKeyType.Next:
-                    data["return_key_type"] = "Next";
-                    break;
-                case ReturnKeyType.Done:
-                    data["return_key_type"] = "Done";
-                    break;
-                case ReturnKeyType.Search:
-                    data["return_key_type"] = "Search";
-                    break;
-                case ReturnKeyType.Send:
-                    data["return_key_type"] = "Send";
-                    break;
-                default:
-                    data["return_key_type"] = "Default";
-                    break;
-            }
-
-            this.Execute (data);
+            data["return_key_type"] = ReturnKey switch {
+                ReturnKeyType.Next => (JsonNode)"Next",
+                ReturnKeyType.Done => (JsonNode)"Done",
+                ReturnKeyType.Search => (JsonNode)"Search",
+                ReturnKeyType.Send => (JsonNode)"Send",
+                _ => (JsonNode)"Default",
+            };
+            Execute(data);
         }
+#endif
 
         /// <summary>
         /// New field successfully added
         /// </summary>
-        void Ready () {
+        void Ready() {
             _isMobileInputCreated = true;
+            if (!string.IsNullOrEmpty(_textOnCreate)) {
+                Text = _textOnCreate;
+            }
             if (!_isVisibleOnCreate) {
-                SetVisible (false);
+                SetVisible(false);
             }
             if (_isFocusOnCreate) {
-                SetFocus (true);
+                SetFocus(true);
             }
+        }
+
+        /// <summary>
+        /// Set text color
+        /// </summary>
+        public void SetTextColor(Color color) {
+            var data = new JsonObject();
+            data["msg"] = SET_TEXT_COLOR;
+            data["color_r"] = InvariantCultureString(color.r);
+            data["color_g"] = InvariantCultureString(color.g);
+            data["color_b"] = InvariantCultureString(color.b);
+            data["color_a"] = InvariantCultureString(color.a);
+            Execute(data);
+        }
+
+        /// <summary>
+        /// Set text color for placeholder
+        /// </summary>
+        public void SetPlaceholderTextColor(Color color) {
+            var data = new JsonObject();
+            data["msg"] = SET_PTEXT_COLOR;
+            data["color_r"] = InvariantCultureString(color.r);
+            data["color_g"] = InvariantCultureString(color.g);
+            data["color_b"] = InvariantCultureString(color.b);
+            data["color_a"] = InvariantCultureString(color.a);
+            Execute(data);
+        }
+
+        /// <summary>
+        /// Set background color
+        /// </summary>
+        public void SetBackgroundColor(Color color) {
+            var data = new JsonObject();
+            data["msg"] = SET_BG_COLOR;
+            data["color_r"] = InvariantCultureString(color.r);
+            data["color_g"] = InvariantCultureString(color.g);
+            data["color_b"] = InvariantCultureString(color.b);
+            data["color_a"] = InvariantCultureString(color.a);
+            Execute(data);
+        }
+
+        /// <summary>
+        /// Set content type to input
+        /// </summary>
+        /// <param name="type">Type</param>
+        public void SetContentType(InputContentType type) {
+            var data = new JsonObject();
+            data["msg"] = SET_CONTENT_TYPE;
+            data["type"] = type.ToString();
+            Execute(data);
+        }
+
+        /// <summary>
+        /// Switch readonly mode
+        /// </summary>
+        /// <param name="value">On/off</param>
+        public void SetReadonly(bool value) {
+            var data = new JsonObject();
+            data["msg"] = SET_READ_ONLY;
+            data["value"] = value;
+            Execute(data);
         }
 
         /// <summary>
         /// Set text to field
         /// </summary>
         /// <param name="text">New text</param>
-        void SetTextNative (string text) {
-            JsonObject data = new JsonObject ();
+        void SetTextNative(string text) {
+            var data = new JsonObject();
             data["msg"] = SET_TEXT;
             data["text"] = text;
-            this.Execute (data);
+            Execute(data);
         }
 
         /// <summary>
         /// Remove field
         /// </summary>
-        private void RemoveNative () {
-            JsonObject data = new JsonObject ();
+        void RemoveNative() {
+            _isMobileInputCreated = false;
+            var data = new JsonObject();
             data["msg"] = REMOVE;
-	    _isMobileInputCreated = false;
-            this.Execute (data);
+            Execute(data);
         }
 
         /// <summary>
         /// Set new size and position
         /// </summary>
         /// <param name="inputRect">RectTransform</param>
-        public void SetRectNative (RectTransform inputRect) {
-            Rect rect = GetScreenRectFromRectTransform (inputRect);
-            if (_lastRect == rect) {
+        public void SetRect(RectTransform inputRect) {
+            var rect = GetScreenRectFromRectTransform(inputRect);
+            if (_inputObject == null || !_isMobileInputCreated || _lastRect == rect) {
                 return;
             }
             _lastRect = rect;
-            JsonObject data = new JsonObject ();
+            var data = new JsonObject();
             data["msg"] = SET_RECT;
             data["x"] = InvariantCultureString(rect.x / Screen.width);
             data["y"] = InvariantCultureString(rect.y / Screen.height);
             data["width"] = InvariantCultureString(rect.width / Screen.width);
             data["height"] = InvariantCultureString(rect.height / Screen.height);
-            this.Execute (data);
+            Execute(data);
         }
 
         /// <summary>
         /// Set focus on field
         /// </summary>
         /// <param name="isFocus">true | false</param>
-        public void SetFocus (bool isFocus) {
+        public void SetFocus(bool isFocus) {
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
             if (!_isMobileInputCreated) {
                 _isFocusOnCreate = isFocus;
                 return;
             }
-            JsonObject data = new JsonObject ();
+            var data = new JsonObject();
             data["msg"] = SET_FOCUS;
             data["is_focus"] = isFocus;
-            this.Execute (data);
+            Execute(data);
 #else
             if (gameObject.activeInHierarchy) {
                 if (isFocus) {
-                    _inputObject.ActivateInputField ();
+                    _inputObject.ActivateInputField();
                 } else {
-                    _inputObject.DeactivateInputField ();
+                    _inputObject.DeactivateInputField();
                 }
             } else {
                 _isFocusOnCreate = isFocus;
@@ -602,16 +731,17 @@ namespace Mopsicus.Plugins {
         /// Set field visible
         /// </summary>
         /// <param name="isVisible">true | false</param>
-        public void SetVisible (bool isVisible) {
+        public void SetVisible(bool isVisible) {
             if (!_isMobileInputCreated) {
                 _isVisibleOnCreate = isVisible;
                 return;
             }
-            JsonObject data = new JsonObject ();
+            var data = new JsonObject();
             data["msg"] = SET_VISIBLE;
             data["is_visible"] = isVisible;
-            this.Execute (data);
-            this.Visible = isVisible;
+            Execute(data);
+            Visible = isVisible;
+            _lastRect = new Rect();
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -620,26 +750,26 @@ namespace Mopsicus.Plugins {
         /// Send android button state
         /// </summary>
         /// <param name="key">Code</param>
-        private void ForceSendKeydownAndroid (string key) {
-            JsonObject data = new JsonObject ();
+        private void ForceSendKeydownAndroid(string key) {
+            var data = new JsonObject();
             data["msg"] = ANDROID_KEY_DOWN;
             data["key"] = key;
-            this.Execute (data);
+            Execute(data);
         }
 
         /// <summary>
         /// Keyboard handler
         /// </summary>
-        private void UpdateForceKeyeventForAndroid () {
-            if (UnityEngine.Input.anyKeyDown) {
-                if (UnityEngine.Input.GetKeyDown (KeyCode.Backspace)) {
-                    this.ForceSendKeydownAndroid ("backspace");
+        private void UpdateForceKeyeventForAndroid() {
+            if (Input.anyKeyDown) {
+                if (Input.GetKeyDown(KeyCode.Backspace)) {
+                    ForceSendKeydownAndroid("backspace");
                 } else {
-                    foreach (char c in UnityEngine.Input.inputString) {
+                    foreach (var c in Input.inputString) {
                         if (c == '\n') {
-                            this.ForceSendKeydownAndroid ("enter");
+                            ForceSendKeydownAndroid("enter");
                         } else {
-                            this.ForceSendKeydownAndroid (Input.inputString);
+                            ForceSendKeydownAndroid(Input.inputString);
                         }
                     }
                 }
@@ -648,5 +778,4 @@ namespace Mopsicus.Plugins {
 #endif
 
     }
-
 }
