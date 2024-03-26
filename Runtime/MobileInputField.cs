@@ -280,7 +280,7 @@ namespace UMI {
         /// </summary>
         void OnEnable() {
             if (_isMobileInputCreated) {
-                SetRect(this._inputObjectText.rectTransform);
+                SetRectNative(this._inputObjectText.rectTransform);
                 SetVisible(true);
             } else if (!_isFirstCreation) {
                 StartCoroutine(InitProcess());
@@ -404,7 +404,7 @@ namespace UMI {
                     }
                 }
 #endif
-                SetRect(_inputObjectText.rectTransform);
+                SetRectNative(_inputObjectText.rectTransform);
             }
         }
 
@@ -684,7 +684,7 @@ namespace UMI {
         /// Set new size and position
         /// </summary>
         /// <param name="inputRect">RectTransform</param>
-        public void SetRect(RectTransform inputRect) {
+        public void SetRectNative(RectTransform inputRect) {
             var rect = GetScreenRectFromRectTransform(inputRect);
             if (_inputObject == null || !_isMobileInputCreated || _lastRect == rect) {
                 return;
