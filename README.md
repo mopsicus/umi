@@ -217,4 +217,4 @@ Before you ask a question, it is best to search for existing [issues](https://gi
 
 # 🔑 License
 
-UMI is licensed under the [MIT License](./LICENSE). Use it for free and be happy. 🎉
+UMI is licensed under the [MIT License](./LICENSE.md). Use it for free and be happy. 🎉
