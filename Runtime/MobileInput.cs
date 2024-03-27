@@ -9,14 +9,12 @@ using UnityEngine.Networking;
 using System.Runtime.InteropServices;
 #endif
 
-namespace UMI
-{
+namespace UMI {
 
     /// <summary>
     /// Device orientation type
     /// </summary>
-    public enum HardwareOrientation
-    {
+    public enum HardwareOrientation {
         LANDSCAPE = 0,
         PORTRAIT = 1,
         PORTRAIT_DOWN = 2,
@@ -28,8 +26,7 @@ namespace UMI
     /// <summary>
     /// Base class for InputField
     /// </summary>
-    public abstract class MobileInputReceiver : MonoBehaviour
-    {
+    public abstract class MobileInputReceiver : MonoBehaviour {
 
         /// <summary>
         /// Current input id
@@ -39,8 +36,7 @@ namespace UMI
         /// <summary>
         /// Init input and register interface
         /// </summary>
-        protected virtual void Start()
-        {
+        protected virtual void Start() {
 #if !UNITY_EDITOR
             _id = MobileInput.Register(this);
 #endif
@@ -49,8 +45,7 @@ namespace UMI
         /// <summary>
         /// Action on destroy
         /// </summary>
-        protected virtual void OnDestroy()
-        {
+        protected virtual void OnDestroy() {
 #if !UNITY_EDITOR
             MobileInput.RemoveReceiver(_id);
 #endif
@@ -60,8 +55,7 @@ namespace UMI
         /// Send data to plugin
         /// </summary>
         /// <param name="data">Data</param>
-        protected void Execute(JsonObject data)
-        {
+        protected void Execute(JsonObject data) {
 #if !UNITY_EDITOR
             MobileInput.Execute(_id, data);
 #endif
@@ -82,8 +76,7 @@ namespace UMI
     /// <summary>
     /// Mobile native input plugin
     /// </summary>
-    public class MobileInput : MonoBehaviour
-    {
+    public class MobileInput : MonoBehaviour {
 
         /// <summary>
         /// Name for object
@@ -211,10 +204,8 @@ namespace UMI
         /// <summary>
         /// Constructor
         /// </summary>
-        void Awake()
-        {
-            if ((object)_instance == null)
-            {
+        void Awake() {
+            if ((object)_instance == null) {
                 _instance = GetComponent<MobileInput>();
             }
         }
@@ -222,20 +213,16 @@ namespace UMI
         /// <summary>
         /// Callback on data
         /// </summary>
-        public void OnData(JsonObject data)
-        {
+        public void OnData(JsonObject data) {
 #if UMI_DEBUG
             Debug.Log($"[UMI] received: {data.ToJsonPrettyPrintString()}");
 #endif
             _data = data;
-            try
-            {
+            try {
                 var response = (JsonObject)JsonNode.ParseJsonString(data["data"]);
-                if (response.ContainsKey("action"))
-                {
+                if (response.ContainsKey("action")) {
                     string action = response["action"];
-                    switch (action)
-                    {
+                    switch (action) {
                         case KEYBOARD_ACTION:
                             bool isShow = response["show"];
                             int height = response["height"];
@@ -248,8 +235,7 @@ namespace UMI
                             }
 #endif
                             string orientation = response["orientation"];
-                            switch (orientation)
-                            {
+                            switch (orientation) {
                                 case LANDSCAPE:
                                     OnOrientationChange(HardwareOrientation.LANDSCAPE);
                                     break;
@@ -280,14 +266,11 @@ namespace UMI
                     }
                 }
                 int id = response["id"];
-                if (_inputs.ContainsKey(id))
-                {
+                if (_inputs.ContainsKey(id)) {
                     GetReceiver(id).Send(response);
                 }
                 _data = null;
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
 #if UMI_DEBUG
                 Debug.LogError($"[UMI] received error: {e}");
 #endif
@@ -297,8 +280,7 @@ namespace UMI
         /// <summary>
         /// Callback on error
         /// </summary>
-        public void OnError(JsonObject data)
-        {
+        public void OnError(JsonObject data) {
 #if UMI_DEBUG
             Debug.LogError($"[UMI] error: {data.ToJsonPrettyPrintString()}");
 #endif
@@ -308,25 +290,18 @@ namespace UMI
         /// Handler to process data to plugin
         /// </summary>
         /// <param name="data">Raw data</param>
-        void OnDataReceive(string data)
-        {
+        void OnDataReceive(string data) {
 #if UMI_DEBUG
             Debug.Log($"[UMI] raw data: {data}");
 #endif
-            try
-            {
+            try {
                 var info = (JsonObject)JsonNode.ParseJsonString(data);
-                if (info.ContainsKey("error"))
-                {
+                if (info.ContainsKey("error")) {
                     OnError(info);
-                }
-                else
-                {
+                } else {
                     OnData(info);
                 }
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
 #if UMI_DEBUG
                 Debug.LogError($"[UMI] raw data error: data = {data}, error = {e}");
 #endif
@@ -349,8 +324,7 @@ namespace UMI
         /// </summary>
         /// <param name="receiver">Receiver</param>
         /// <returns>Id</returns>
-        public static int Register(MobileInputReceiver receiver)
-        {
+        public static int Register(MobileInputReceiver receiver) {
             var index = _instance._counter;
             _instance._counter++;
             _instance._inputs[index] = receiver;
@@ -361,8 +335,7 @@ namespace UMI
         /// Remove MobileInput
         /// </summary>
         /// <param name="id">Input id</param>
-        public static void RemoveReceiver(int id)
-        {
+        public static void RemoveReceiver(int id) {
             _instance._inputs.Remove(id);
         }
 
@@ -371,8 +344,7 @@ namespace UMI
         /// </summary>
         /// <param name="id">Input id</param>
         /// <returns>Receiver</returns>
-        public static MobileInputReceiver GetReceiver(int id)
-        {
+        public static MobileInputReceiver GetReceiver(int id) {
             return _instance._inputs[id];
         }
 
@@ -381,8 +353,7 @@ namespace UMI
         /// </summary>
         /// <param name="id">id</param>
         /// <param name="data">json</param>
-        public static void Execute(int id, JsonObject data)
-        {
+        public static void Execute(int id, JsonObject data) {
 #if UMI_DEBUG
             Debug.Log($"[UMI] ({id}) execute: {data.ToJsonString()}");
 #endif
@@ -400,10 +371,8 @@ namespace UMI
         /// <summary>
         /// Init plugin
         /// </summary>
-        public static void Init()
-        {
-            if (_isInited)
-            {
+        public static void Init() {
+            if (_isInited) {
 #if UMI_DEBUG
                 Debug.LogError($"[UMI] already inited");
 #endif
@@ -413,8 +382,7 @@ namespace UMI
             Debug.Log($"[UMI] init");
 #endif
             var state = PlayerPrefs.GetInt(INIT_KEY, 0);
-            if (state == 0)
-            {
+            if (state == 0) {
                 UpdateFonts();
                 PlayerPrefs.SetInt(INIT_KEY, 1);
                 PlayerPrefs.Save();
@@ -442,8 +410,7 @@ namespace UMI
         /// <summary>
         /// Destructor
         /// </summary>
-        public static void Destroy()
-        {
+        public static void Destroy() {
 #if UMI_DEBUG
             Debug.Log($"[UMI] destroy");
 #endif
@@ -459,8 +426,7 @@ namespace UMI
         /// <summary>
         /// Check screen scale factor (iOS)
         /// </summary>
-        public static float GetScreenScale()
-        {
+        public static float GetScreenScale() {
 #if UNITY_ANDROID
             return 1f;
 #elif UNITY_IOS
@@ -471,14 +437,11 @@ namespace UMI
         /// <summary>
         /// Update fonts
         /// </summary>
-        public static void UpdateFonts()
-        {
+        public static void UpdateFonts() {
             var path = Application.streamingAssetsPath;
-            if (Directory.Exists(path))
-            {
+            if (Directory.Exists(path)) {
                 var files = Directory.GetFiles(path, "*.ttf");
-                foreach (var filePath in files)
-                {
+                foreach (var filePath in files) {
                     PrepareFontsAsset(Path.GetFileName(filePath));
                 }
             }
@@ -488,8 +451,7 @@ namespace UMI
         /// Copy file from StreamingAssets to device path
         /// </summary>
         /// <param name="fileName">File name</param>
-        static void PrepareFontsAsset(string fileName)
-        {
+        static void PrepareFontsAsset(string fileName) {
 #if UMI_DEBUG
             Debug.Log($"[UMI] prepare font asset: {fileName}");
 #endif
@@ -513,12 +475,9 @@ namespace UMI
         /// <summary>
         /// Handler to check data on focus change
         /// </summary>
-        void OnApplicationPause(bool pauseStatus)
-        {
-            if (!pauseStatus)
-            {
-                if (_data != null)
-                {
+        void OnApplicationPause(bool pauseStatus) {
+            if (!pauseStatus) {
+                if (_data != null) {
                     OnData(_data);
                 }
             }
