@@ -69,7 +69,7 @@ Look through the [GitHub issues](https://github.com/mopsicus/umi/issues) for fea
 
 Ready to contribute? Here are the simple steps for local development:
 
-1. [Fork](https://github.com/mopsicus/umi/fork) the client for UMI repo on GitHub
+1. [Fork](https://github.com/mopsicus/umi/fork) UMI repo on GitHub
 2. Clone your fork locally:
     ```
     git clone git@github.com:YOUR_USERNAME/umi.git
