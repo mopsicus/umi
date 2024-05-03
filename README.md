@@ -51,7 +51,7 @@ Get it from [releases page](https://github.com/mopsicus/umi/releases) or add the
 
 See the samples section to get a [demo app](./Samples~/Demo). This demo will show you how to initiate and use UMI in your app, how to create a chat-like app, and how to use a custom font. 
 
-_Tested in Unity 2020.3.x, Android and iOS._
+_Tested in Unity 2020.3.x, Android (API >= 24) and iOS._
 
 ### Initialization
 

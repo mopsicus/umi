@@ -498,7 +498,7 @@ namespace UMI {
         /// Remove focus, keyboard when app lose focus
         /// </summary>
         public override void Hide() {
-            if (_inputObject != null && _isMobileInputCreated && _inputObject.isFocused) {
+            if (_inputObject != null && _isMobileInputCreated) {
                 SetFocus(false);
             }
         }
