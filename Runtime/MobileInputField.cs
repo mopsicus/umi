@@ -306,26 +306,6 @@ namespace UMI {
         }
 
         /// <summary>
-        /// Handler for app focus lost
-        /// </summary>
-        void OnApplicationFocus(bool hasFocus) {
-            if (!_isMobileInputCreated || !Visible) {
-                return;
-            }
-            SetVisible(hasFocus);
-        }
-
-        /// <summary>
-        /// Handler for app focus lost
-        /// </summary>
-        void OnApplicationPause(bool hasPause) {
-            if (!_isMobileInputCreated || !Visible) {
-                return;
-            }
-            SetVisible(!hasPause);
-        }
-
-        /// <summary>
         /// Current InputField for external access
         /// </summary>
         public TMP_InputField InputField {
