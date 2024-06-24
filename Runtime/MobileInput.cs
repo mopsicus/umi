@@ -427,10 +427,10 @@ namespace UMI {
         /// Check screen scale factor (iOS)
         /// </summary>
         public static float GetScreenScale() {
-#if UNITY_ANDROID
-            return 1f;
-#elif UNITY_IOS
+#if UNITY_IOS
             return scaleFactor();
+#else
+            return 1f;
 #endif
         }
 
