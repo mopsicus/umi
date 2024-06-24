@@ -210,7 +210,7 @@ namespace UMI {
         /// <summary>
         /// Mobile input first creation flag
         /// </summary>
-        bool _isFirstCreation = true;
+        bool _initStarted = false;
 
         /// <summary>
         /// InputField object
@@ -271,8 +271,8 @@ namespace UMI {
         /// </summary>
         protected override void Start() {
             base.Start();
-            StartCoroutine(InitProcess());
-            _isFirstCreation = false;
+            if(_initStarted == false)
+                StartCoroutine(InitProcess());
         }
 
         /// <summary>
@@ -282,9 +282,9 @@ namespace UMI {
             if (_isMobileInputCreated) {
                 SetRectNative(this._inputObjectText.rectTransform);
                 SetVisible(true);
-            } else if (!_isFirstCreation) {
+            } 
+            else if (_initStarted == false)
                 StartCoroutine(InitProcess());
-            }
         }
 
         /// <summary>
@@ -363,6 +363,9 @@ namespace UMI {
         /// Initialization
         /// </summary>
         IEnumerator InitProcess() {
+            if(_initStarted == true)
+                throw new InvalidOperationException("InitProcess already started");
+            _initStarted = true;
             yield return WaitForEndOfFrame;
             PrepareNativeEdit();
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
