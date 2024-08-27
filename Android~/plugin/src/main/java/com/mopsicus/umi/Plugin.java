@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
+
 import com.unity3d.player.UnityPlayer;
 
 import org.json.JSONException;
@@ -57,12 +58,13 @@ public class Plugin {
 
     /**
      * Get view recursive
+     *
      * @param view View to start search
      * @return Last view
      */
     private static View getLeafView(View view) {
         if (view instanceof ViewGroup) {
-            ViewGroup viewGroup = (ViewGroup)view;
+            ViewGroup viewGroup = (ViewGroup) view;
             for (int i = 0; i < viewGroup.getChildCount(); ++i) {
                 View result = getLeafView(viewGroup.getChildAt(i));
                 if (result != null) {
@@ -70,8 +72,7 @@ public class Plugin {
                 }
             }
             return null;
-        }
-        else {
+        } else {
             return view;
         }
     }
@@ -98,7 +99,7 @@ public class Plugin {
             if (layout != null) {
                 group.removeView(layout);
             }
-            ViewGroup rootView = activity.findViewById (android.R.id.content);
+            ViewGroup rootView = activity.findViewById(android.R.id.content);
             View topMostView = getLeafView(rootView);
             group = (ViewGroup) topMostView.getParent();
             layout = new RelativeLayout(activity);
@@ -108,6 +109,29 @@ public class Plugin {
             keyboardListener = new KeyboardListener();
             keyboardProvider = new KeyboardProvider(activity, group, keyboardListener, orientationListener);
         });
+    }
+
+    /**
+     * Get height of navigation bar
+     *
+     * @return int of value
+     */
+    @SuppressWarnings("unused")
+    public static int getBarHeight() {
+        return keyboardProvider.getNavBarHeight();
+    }
+
+    /**
+     * Return type of screen navigation
+     * 0 : Navigation is displaying with 3 buttons
+     * 1 : Navigation is displaying with 2 button(Android P navigation mode)
+     * 2 : Full screen gesture(Gesture on android Q)
+     *
+     * @return int of type
+     */
+    @SuppressWarnings("unused")
+    public static int getBarType() {
+        return keyboardProvider.getNavBarNavigationType();
     }
 
     /**
@@ -128,7 +152,8 @@ public class Plugin {
 
     /**
      * Send data to MobileInput
-     * @param id Input id
+     *
+     * @param id   Input id
      * @param data Data to process
      */
     @SuppressWarnings("unused")
@@ -140,7 +165,7 @@ public class Plugin {
      * Check device rotate locking
      */
     @SuppressWarnings("unused")
-    public static boolean checkIsRotateLocked () {
+    public static boolean checkIsRotateLocked() {
         int val = Settings.System.getInt(UnityPlayer.currentActivity.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, 0);
         return (val != 1);
     }

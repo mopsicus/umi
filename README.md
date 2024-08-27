@@ -84,6 +84,7 @@ In the inspector, you can edit several options that will be applied to the nativ
 - text color
 - placeholder text
 - placeholder text color
+- cursor/caret color
 - character limit
 - font size
 - text align

@@ -40,6 +40,12 @@ This script manages the interaction between the Unity app and native part. It co
 
 `UpdateFonts()` – update fonts in app folder when changing fonts list
 
+`IsRotationLocked()` – check is screen rotation locked (Android)
+
+`GetBarType()` – get navigation bar type (Android)
+
+`GetBarHeight()` – get navigation bar height, if exist (Android)
+
 `Action<bool, int> OnKeyboardAction` and `Action<HardwareOrientation> OnOrientationChange` – two events that you can subscribe to and detect keyboard appearance and orientation changes
 
 ```csharp
@@ -120,6 +126,7 @@ Many options from `TMP Input Field` will be applied to the native field. You can
 - text color
 - placeholder text
 - placeholder text color
+- cursor/caret color
 - character limit
 - font size
 - text align
@@ -170,6 +177,8 @@ Different native input types are used for multiline and singleline options: `UIT
 ## Keyboard height explanation
 
 When you get the keyboard height from `OnKeyboardAction`, you get the "true" height. To convert it to Unity UI height, you need to divide it by the screen aspect ratio. Screen aspect ratio is the ratio of the height of the screen to the height of the UI canvas and to the screen scale (for iOS). 
+
+For Android builds, you can use the `GetBarType()` and `GetBarHeight()` methods to determine the screen device parameters for more flexible control.
 
 See [demo app](../Samples~/Demo/) with chat screen.
 

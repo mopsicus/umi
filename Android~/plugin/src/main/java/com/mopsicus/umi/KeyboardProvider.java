@@ -130,6 +130,21 @@ public class KeyboardProvider extends PopupWindow {
     }
 
     /**
+     * Get height of navigation bar for custom behaviour
+     */
+    public int getNavBarHeight() {
+        if (!checkSoftKeys() || getNavBarNavigationType() == 2) {
+            return 0;
+        }
+        Resources resources = activity.getResources();
+        int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return resources.getDimensionPixelSize(resourceId);
+        }
+        return 0;
+    }
+
+    /**
      * Return type of screen navigation
      * 0 : Navigation is displaying with 3 buttons
      * 1 : Navigation is displaying with 2 button(Android P navigation mode)
@@ -138,7 +153,7 @@ public class KeyboardProvider extends PopupWindow {
      * @return int of type
      */
     @SuppressWarnings("unused")
-    private int getNavBarNavigationType() {
+    public int getNavBarNavigationType() {
         Resources resources = activity.getResources();
         @SuppressLint("DiscouragedApi") int resourceId = resources.getIdentifier("config_navBarInteractionMode", "integer", "android");
         if (resourceId > 0) {

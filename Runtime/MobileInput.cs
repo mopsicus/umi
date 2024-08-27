@@ -312,11 +312,35 @@ namespace UMI {
         /// <summary>
         /// Check if screen rotation locked
         /// </summary>
-        bool IsRotatationLocked() {
+        public static bool IsRotationLocked() {
             using (var plugin = new AndroidJavaClass(PLUGIN_PACKAGE)) {
                 return plugin.CallStatic<bool>("checkIsRotateLocked");
             }
         }
+        
+        /// <summary>
+        /// Return type of screen navigation
+        /// 
+        /// 0 : Navigation is displaying with 3 buttons
+        /// 1 : Navigation is displaying with 2 button(Android P navigation mode)
+        /// 2 : Full screen gesture(Gesture on android Q)
+        /// </summary>
+        /// <returns>Type of navigation bar</returns>
+        public static int GetBarType() {
+            using (var plugin = new AndroidJavaClass(PLUGIN_PACKAGE)) {
+                return plugin.CallStatic<int>("getBarType");
+            }
+        }   
+
+        /// <summary>
+        /// Get height of navigation bar
+        /// </summary>
+        /// <returns>Height of navbar</returns>
+        public static int GetBarHeight() {
+            using (var plugin = new AndroidJavaClass(PLUGIN_PACKAGE)) {
+                return plugin.CallStatic<int>("getBarHeight");
+            }
+        }               
 #endif
 
         /// <summary>
@@ -427,12 +451,12 @@ namespace UMI {
         /// Check screen scale factor (iOS)
         /// </summary>
         public static float GetScreenScale() {
-#if UNITY_ANDROID
-            return 1f;
-#elif UNITY_IOS
+#if UNITY_IOS
             return scaleFactor();
+#else
+            return 1f;
 #endif
-        }
+        }              
 
         /// <summary>
         /// Update fonts
