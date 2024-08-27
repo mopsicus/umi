@@ -509,12 +509,18 @@ NSMutableDictionary *mobileInputList = nil;
     float placeHolderColor_b = [[data valueForKey:@"placeholder_color_b"] floatValue];
     float placeHolderColor_a = [[data valueForKey:@"placeholder_color_a"] floatValue];
     UIColor *placeHolderColor = [UIColor colorWithRed:placeHolderColor_r green:placeHolderColor_g blue:placeHolderColor_b alpha:placeHolderColor_a];
+    float caretColor_r = [[data valueForKey:@"caret_color_r"] floatValue];
+    float caretColor_g = [[data valueForKey:@"caret_color_g"] floatValue];
+    float caretColor_b = [[data valueForKey:@"caret_color_b"] floatValue];
+    float caretColor_a = [[data valueForKey:@"caret_color_a"] floatValue];    
+    UIColor *caretColor = [UIColor colorWithRed:caretColor_r green:caretColor_g blue:caretColor_b alpha:caretColor_a];
     NSString *contentType = [data valueForKey:@"content_type"];
     NSString *alignment = [data valueForKey:@"align"];
     NSString *customFont = [data valueForKey:@"font"];
     BOOL withDoneButton = [[data valueForKey:@"with_done_button"] boolValue];
     BOOL withClearButton = [[data valueForKey:@"with_clear_button"] boolValue];
     isMultiline = [[data valueForKey:@"multiline"] boolValue];
+    BOOL isChangeCaret = [[data valueForKey:@"caret_color"] boolValue];
     BOOL autoCorrection = NO;
     BOOL password = NO;
     NSString *inputType = [data valueForKey:@"input_type"];
@@ -656,6 +662,9 @@ NSMutableDictionary *mobileInputList = nil;
         textView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, 0.0f, 0.0f);
         textView.placeholder = placeholder;
         textView.placeholderColor = placeHolderColor;
+        if (isChangeCaret) {
+            textView.tintColor = caretColor;
+        }
         textView.delegate = self;
         if (keyType == UIKeyboardTypeEmailAddress) {
             textView.autocapitalizationType = UITextAutocapitalizationTypeNone;
@@ -674,6 +683,9 @@ NSMutableDictionary *mobileInputList = nil;
         textField.text = @"";
         textField.textColor = textColor;
         textField.backgroundColor = backgroundColor;
+        if (isChangeCaret) {
+            textField.tintColor = caretColor;
+        }
         textField.returnKeyType = returnKeyType;
         textField.autocorrectionType = autoCorrection ? UITextAutocorrectionTypeYes : UITextAutocorrectionTypeNo;
         textField.contentVerticalAlignment = valign;

@@ -37,6 +37,8 @@ namespace UMI {
             public bool Multiline;
             public Color TextColor;
             public Color BackgroundColor;
+            public bool ChangeCaret;
+            public Color CaretColor;
             public string ContentType;
             public string InputType;
             public string KeyboardType;
@@ -306,6 +308,7 @@ namespace UMI {
             base.OnDestroy();
         }
 
+#if UNITY_ANDROID
         /// <summary>
         /// Handler for app focus lost
         /// </summary>
@@ -325,6 +328,7 @@ namespace UMI {
             }
             SetVisible(!hasPause);
         }
+#endif
 
         /// <summary>
         /// Current InputField for external access
@@ -420,6 +424,8 @@ namespace UMI {
             var placeHolder = _inputObject.placeholder.GetComponent<TextMeshProUGUI>();
             _config.Placeholder = placeHolder.text;
             _config.PlaceholderColor = placeHolder.color;
+            _config.CaretColor = _inputObject.caretColor;
+            _config.ChangeCaret = _inputObject.customCaretColor;
             _config.CharacterLimit = _inputObject.characterLimit;
             var rect = GetScreenRectFromRectTransform(_inputObjectText.rectTransform);
             var ratio = rect.height / _inputObjectText.rectTransform.rect.height;
@@ -573,6 +579,11 @@ namespace UMI {
             data["placeholder_color_g"] = InvariantCultureString(_config.PlaceholderColor.g);
             data["placeholder_color_b"] = InvariantCultureString(_config.PlaceholderColor.b);
             data["placeholder_color_a"] = InvariantCultureString(_config.PlaceholderColor.a);
+            data["caret_color_r"] = InvariantCultureString(_config.CaretColor.r);
+            data["caret_color_g"] = InvariantCultureString(_config.CaretColor.g);
+            data["caret_color_b"] = InvariantCultureString(_config.CaretColor.b);
+            data["caret_color_a"] = InvariantCultureString(_config.CaretColor.a);  
+            data["caret_color"] = _config.ChangeCaret;
             data["multiline"] = _config.Multiline;
             data["input_type"] = _config.InputType;
             data["keyboard_type"] = _config.KeyboardType;

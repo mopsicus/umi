@@ -1,9 +1,15 @@
 package com.mopsicus.umi;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
+import android.os.Build;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -18,9 +24,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
+import android.widget.TextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.lang.reflect.Field;
 
 public class MobileInput {
 
@@ -67,6 +76,16 @@ public class MobileInput {
      * Current input type
      */
     private int editInputType = 0;
+
+    /**
+     * Cached caret color
+     */
+    private int caretColor = Color.GRAY;
+
+    /**
+     * Cached flag to change caret to custom color or not
+     */
+    private boolean isCaretChange = false;
 
     /**
      * List of inputs
@@ -255,6 +274,10 @@ public class MobileInput {
             int placeHolderColor_g = (int) (255.0f * data.getDouble("placeholder_color_g"));
             int placeHolderColor_b = (int) (255.0f * data.getDouble("placeholder_color_b"));
             int placeHolderColor_a = (int) (255.0f * data.getDouble("placeholder_color_a"));
+            int caretColor_r = (int) (255.0f * data.getDouble("caret_color_r"));
+            int caretColor_g = (int) (255.0f * data.getDouble("caret_color_g"));
+            int caretColor_b = (int) (255.0f * data.getDouble("caret_color_b"));
+            int caretColor_a = (int) (255.0f * data.getDouble("caret_color_a"));
             String contentType = data.getString("content_type");
             String inputType = data.optString("input_type");
             String keyboardType = data.optString("keyboard_type");
@@ -262,6 +285,8 @@ public class MobileInput {
             String alignment = data.getString("align");
             String customFont = data.getString("font");
             boolean multiline = data.getBoolean("multiline");
+            caretColor = Color.argb(caretColor_a, caretColor_r, caretColor_g, caretColor_b);
+            isCaretChange = data.getBoolean("caret_color");
             edit = new EditText(Plugin.activity.getApplicationContext());
             edit.setSingleLine(!multiline);
             edit.setId(this.id);
@@ -476,6 +501,74 @@ public class MobileInput {
         }
     }
 
+    /***
+     * Set cursor/caret/handles color
+     *
+     * @param color Color value
+     */
+    void setCaretColor(int color) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (edit.getTextCursorDrawable() instanceof InsetDrawable) {
+                InsetDrawable insetDrawable = (InsetDrawable) edit.getTextCursorDrawable();
+                insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+                edit.setTextCursorDrawable(insetDrawable);
+                Log.d("[UMI]", String.format("set caret cursor: %s", color));
+            }
+            if (edit.getTextSelectHandle() instanceof BitmapDrawable) {
+                BitmapDrawable insetDrawable = (BitmapDrawable) edit.getTextSelectHandle();
+                insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+                edit.setTextSelectHandle(insetDrawable);
+                Log.d("[UMI]", String.format("set caret handle: %s", color));
+            }
+            if (edit.getTextSelectHandleRight() instanceof BitmapDrawable) {
+                BitmapDrawable insetDrawable = (BitmapDrawable) edit.getTextSelectHandleRight();
+                insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+                edit.setTextSelectHandleRight(insetDrawable);
+                Log.d("[UMI]", String.format("set caret handle right: %s", color));
+            }
+            if (edit.getTextSelectHandleLeft() instanceof BitmapDrawable) {
+                BitmapDrawable insetDrawable = (BitmapDrawable) edit.getTextSelectHandleLeft();
+                insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+                edit.setTextSelectHandleLeft(insetDrawable);
+                Log.d("[UMI]", String.format("set caret handle left: %s", color));
+            }
+        } else {
+            try {
+                Resources res = edit.getContext().getResources();
+                Field field = TextView.class.getDeclaredField("mEditor");
+                field.setAccessible(true);
+                Object editor = field.get(edit);
+                field = TextView.class.getDeclaredField("mCursorDrawableRes");
+                field.setAccessible(true);
+                int cursorDrawableRes = field.getInt(edit);
+                Drawable cursorDrawable = res.getDrawable(cursorDrawableRes).mutate();
+                cursorDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+                Drawable[] drawables = {cursorDrawable, cursorDrawable};
+                field = editor.getClass().getDeclaredField("mCursorDrawable");
+                field.setAccessible(true);
+                field.set(editor, drawables);
+                String[] resFieldNames = {"mTextSelectHandleLeftRes", "mTextSelectHandleRightRes", "mTextSelectHandleRes"};
+                String[] drawableFieldNames = {"mSelectHandleLeft", "mSelectHandleRight", "mSelectHandleCenter"};
+                for (int i = 0; i < resFieldNames.length; i++) {
+                    String resFieldName = resFieldNames[i];
+                    String drawableFieldName = drawableFieldNames[i];
+                    field = TextView.class.getDeclaredField(resFieldName);
+                    field.setAccessible(true);
+                    int selectHandleRes = field.getInt(edit);
+                    Drawable selectHandleDrawable = res.getDrawable(selectHandleRes).mutate();
+                    selectHandleDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+                    field = editor.getClass().getDeclaredField(drawableFieldName);
+                    field.setAccessible(true);
+                    field.set(editor, selectHandleDrawable);
+                }
+            } catch (Exception e) {
+                if (Plugin.bridge.isDebug) {
+                    Log.e("[UMI]", String.format("set caret error: %s", e));
+                }
+            }
+        }
+    }
+
     /**
      * Remove MobileInput
      */
@@ -534,6 +627,11 @@ public class MobileInput {
         }
         if (isFocus) {
             edit.requestFocus();
+            if (isCaretChange) {
+                setCaretColor(caretColor);
+            } else {
+                setCaretColor(Color.GRAY);
+            }
         } else {
             edit.clearFocus();
         }
