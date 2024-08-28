@@ -85,6 +85,7 @@ In the inspector, you can edit several options that will be applied to the nativ
 - placeholder text
 - placeholder text color
 - cursor/caret color
+- text selection color (Android)
 - character limit
 - font size
 - text align

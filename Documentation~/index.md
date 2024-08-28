@@ -127,6 +127,7 @@ Many options from `TMP Input Field` will be applied to the native field. You can
 - placeholder text
 - placeholder text color
 - cursor/caret color
+- text selection color (Android, for iOS uses cursor/caret color)
 - character limit
 - font size
 - text align

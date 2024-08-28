@@ -278,6 +278,10 @@ public class MobileInput {
             int caretColor_g = (int) (255.0f * data.getDouble("caret_color_g"));
             int caretColor_b = (int) (255.0f * data.getDouble("caret_color_b"));
             int caretColor_a = (int) (255.0f * data.getDouble("caret_color_a"));
+            int highlightColor_r = (int) (255.0f * data.getDouble("highlight_color_r"));
+            int highlightColor_g = (int) (255.0f * data.getDouble("highlight_color_g"));
+            int highlightColor_b = (int) (255.0f * data.getDouble("highlight_color_b"));
+            int highlightColor_a = (int) (255.0f * data.getDouble("highlight_color_a"));
             String contentType = data.getString("content_type");
             String inputType = data.optString("input_type");
             String keyboardType = data.optString("keyboard_type");
@@ -402,6 +406,7 @@ public class MobileInput {
             edit.setTextColor(Color.argb(textColor_a, textColor_r, textColor_g, textColor_b));
             edit.setBackgroundColor(Color.argb(backColor_a, backColor_r, backColor_g, backColor_b));
             edit.setHintTextColor(Color.argb(placeHolderColor_a, placeHolderColor_r, placeHolderColor_g, placeHolderColor_b));
+            edit.setHighlightColor(Color.argb(highlightColor_a, highlightColor_r, highlightColor_g, highlightColor_b));
             if (!customFont.equals("default")) {
                 try {
                     Typeface face = Typeface.createFromAsset(Plugin.activity.getAssets(), String.format("%s.ttf", customFont));

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.3] - 2024-08-28
+- ### Added
+- Custom text selection color (Android)
+
 ## [2.0.2] - 2024-08-27
 - ### Added
 - Custom caret/cursor/handles color

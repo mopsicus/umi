@@ -39,6 +39,7 @@ namespace UMI {
             public Color BackgroundColor;
             public bool ChangeCaret;
             public Color CaretColor;
+            public Color HighlightColor;
             public string ContentType;
             public string InputType;
             public string KeyboardType;
@@ -425,6 +426,7 @@ namespace UMI {
             _config.Placeholder = placeHolder.text;
             _config.PlaceholderColor = placeHolder.color;
             _config.CaretColor = _inputObject.caretColor;
+            _config.HighlightColor = _inputObject.selectionColor;
             _config.ChangeCaret = _inputObject.customCaretColor;
             _config.CharacterLimit = _inputObject.characterLimit;
             var rect = GetScreenRectFromRectTransform(_inputObjectText.rectTransform);
@@ -582,7 +584,11 @@ namespace UMI {
             data["caret_color_r"] = InvariantCultureString(_config.CaretColor.r);
             data["caret_color_g"] = InvariantCultureString(_config.CaretColor.g);
             data["caret_color_b"] = InvariantCultureString(_config.CaretColor.b);
-            data["caret_color_a"] = InvariantCultureString(_config.CaretColor.a);  
+            data["caret_color_a"] = InvariantCultureString(_config.CaretColor.a);              
+            data["highlight_color_r"] = InvariantCultureString(_config.HighlightColor.r);
+            data["highlight_color_g"] = InvariantCultureString(_config.HighlightColor.g);
+            data["highlight_color_b"] = InvariantCultureString(_config.HighlightColor.b);
+            data["highlight_color_a"] = InvariantCultureString(_config.HighlightColor.a);  
             data["caret_color"] = _config.ChangeCaret;
             data["multiline"] = _config.Multiline;
             data["input_type"] = _config.InputType;
