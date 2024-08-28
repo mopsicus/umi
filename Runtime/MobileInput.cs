@@ -230,7 +230,7 @@ namespace UMI {
                             return;
                         case ORIENTATION_ACTION:
 #if UNITY_ANDROID
-                            if (IsRotatationLocked()) {
+                            if (IsRotationLocked()) {
                                 return;
                             }
 #endif
