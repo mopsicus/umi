@@ -100,6 +100,7 @@ From UMI, you can edit these additional options:
 - return button type
 - return button callback
 - custom font
+- keyboard language on init
 - manual hide option
 - done & clear buttons option
 
@@ -139,6 +140,7 @@ With `OnKeyboardAction` you can control UI elements, such as moving the input fi
 - `SetBackgroundColor` – change background color
 - `SetContentType` – change input field content type
 - `SetReadonly` – change readonly mode
+- `SetLanguage` – change keyboard language
 
 ### How to use custom fonts
 

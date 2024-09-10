@@ -1,6 +1,7 @@
 package com.mopsicus.umi;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -10,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.os.Build;
+import android.os.LocaleList;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -30,6 +32,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 public class MobileInput {
 
@@ -46,6 +52,7 @@ public class MobileInput {
     private static final String ON_FOCUS = "ON_FOCUS";
     private static final String ON_UNFOCUS = "ON_UNFOCUS";
     private static final String SET_VISIBLE = "SET_VISIBLE";
+    private static final String SET_LANGUAGE = "SET_LANGUAGE";
     private static final String TEXT_CHANGE = "TEXT_CHANGE";
     private static final String TEXT_END_EDIT = "TEXT_END_EDIT";
     private static final String ANDROID_KEY_DOWN = "ANDROID_KEY_DOWN";
@@ -198,6 +205,10 @@ public class MobileInput {
                     boolean isVisible = data.getBoolean("is_visible");
                     this.SetVisible(isVisible);
                     break;
+                case SET_LANGUAGE:
+                    String code = data.getString("value");
+                    setKeyboardLanguage(code);
+                    break;
                 case ANDROID_KEY_DOWN:
                     String strKey = data.getString("key");
                     this.OnForceAndroidKeyDown(strKey);
@@ -285,6 +296,7 @@ public class MobileInput {
             String contentType = data.getString("content_type");
             String inputType = data.optString("input_type");
             String keyboardType = data.optString("keyboard_type");
+            String keyboardLanguage = data.optString("keyboard_language");
             String returnKeyType = data.getString("return_key_type");
             String alignment = data.getString("align");
             String customFont = data.getString("font");
@@ -417,6 +429,9 @@ public class MobileInput {
             } else {
                 edit.setTypeface(Typeface.SANS_SERIF);
             }
+            if (!keyboardLanguage.equals("default")) {
+                setKeyboardLanguage(keyboardLanguage);
+            }
             final MobileInput input = this;
             edit.setOnFocusChangeListener((v, isFocus) -> {
                 if (!isFocus) {
@@ -517,25 +532,33 @@ public class MobileInput {
                 InsetDrawable insetDrawable = (InsetDrawable) edit.getTextCursorDrawable();
                 insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 edit.setTextCursorDrawable(insetDrawable);
-                Log.d("[UMI]", String.format("set caret cursor: %s", color));
+                if (Plugin.bridge.isDebug) {
+                    Log.d("[UMI]", String.format("set caret cursor: %s", color));
+                }
             }
             if (edit.getTextSelectHandle() instanceof BitmapDrawable) {
                 BitmapDrawable insetDrawable = (BitmapDrawable) edit.getTextSelectHandle();
                 insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 edit.setTextSelectHandle(insetDrawable);
-                Log.d("[UMI]", String.format("set caret handle: %s", color));
+                if (Plugin.bridge.isDebug) {
+                    Log.d("[UMI]", String.format("set caret handle: %s", color));
+                }
             }
             if (edit.getTextSelectHandleRight() instanceof BitmapDrawable) {
                 BitmapDrawable insetDrawable = (BitmapDrawable) edit.getTextSelectHandleRight();
                 insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 edit.setTextSelectHandleRight(insetDrawable);
-                Log.d("[UMI]", String.format("set caret handle right: %s", color));
+                if (Plugin.bridge.isDebug) {
+                    Log.d("[UMI]", String.format("set caret handle right: %s", color));
+                }
             }
             if (edit.getTextSelectHandleLeft() instanceof BitmapDrawable) {
                 BitmapDrawable insetDrawable = (BitmapDrawable) edit.getTextSelectHandleLeft();
                 insetDrawable.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
                 edit.setTextSelectHandleLeft(insetDrawable);
-                Log.d("[UMI]", String.format("set caret handle left: %s", color));
+                if (Plugin.bridge.isDebug) {
+                    Log.d("[UMI]", String.format("set caret handle left: %s", color));
+                }
             }
         } else {
             try {
@@ -572,6 +595,49 @@ public class MobileInput {
                 }
             }
         }
+    }
+
+    /**
+     * Update locale list
+     * 
+     * @param languageCode New language code
+     * @return Updated LocaleList
+     */
+    private LocaleList UpdateLocaleList(String languageCode) {
+        LocaleList locales = edit.getImeHintLocales();
+        if (locales == null) {
+            return new LocaleList(new Locale(languageCode));
+        }
+        ArrayList<String> list = new ArrayList<>(Arrays.asList(locales.toLanguageTags().split(",")));
+        if (!list.contains(languageCode)) {
+            list.add(languageCode);
+        }
+        ArrayList<Locale> updated = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            updated.add(new Locale(list.get(i)));
+        }
+        return new LocaleList(updated.toArray(new Locale[updated.size()]));
+    }
+
+    /**
+     * Set keyboard language for input
+     *
+     * @param languageCode Language ISO code
+     */
+    private void setKeyboardLanguage(String languageCode) {
+        if (Plugin.bridge.isDebug) {
+            Log.d("[UMI]", String.format("set keyboard language: %s", languageCode));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            edit.setImeHintLocales(UpdateLocaleList(languageCode));
+        } else {
+            Locale locale = new Locale(languageCode);
+            Configuration config = new Configuration();
+            config.locale = locale;
+            Plugin.activity.getResources().updateConfiguration(config, null);
+        }
+        InputMethodManager imm = (InputMethodManager) Plugin.activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.restartInput(edit);
     }
 
     /**

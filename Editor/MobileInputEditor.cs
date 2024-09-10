@@ -68,6 +68,10 @@ namespace UMI {
             GUILayout.Label("Custom font name:", GUILayout.MaxWidth(LABEL_SIZE));
             _target.CustomFont = GUILayout.TextField(_target.CustomFont);
             GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Keyboard language:", GUILayout.MaxWidth(LABEL_SIZE));
+            _target.KeyboardLanguage = GUILayout.TextField(_target.KeyboardLanguage);
+            GUILayout.EndHorizontal();            
             GUILayout.Space(SPACE);
             _target.IsManualHideControl = GUILayout.Toggle(_target.IsManualHideControl, " Manual hide control");
             GUILayout.Space(SPACE);

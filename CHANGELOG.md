@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.4] - 2024-09-10
+- ### Added
+- Change keyboard language
+
 ## [2.0.3] - 2024-08-28
 - ### Added
 - Custom text selection color (Android)

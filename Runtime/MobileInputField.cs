@@ -134,6 +134,11 @@ namespace UMI {
         const string SET_VISIBLE = "SET_VISIBLE";
 
         /// <summary>
+        /// Set language to keyboard
+        /// </summary>
+        const string SET_LANGUAGE = "SET_LANGUAGE";
+
+        /// <summary>
         /// Event when text changing in InputField
         /// </summary>
         const string TEXT_CHANGE = "TEXT_CHANGE";
@@ -164,6 +169,11 @@ namespace UMI {
         /// Custom font name
         /// </summary>
         public string CustomFont = "default";
+
+        /// <summary>
+        /// Custom keyboard language, ISO code
+        /// </summary>
+        public string KeyboardLanguage = "default";        
 
         /// <summary>
         /// Background color
@@ -593,6 +603,7 @@ namespace UMI {
             data["multiline"] = _config.Multiline;
             data["input_type"] = _config.InputType;
             data["keyboard_type"] = _config.KeyboardType;
+            data["keyboard_language"] = KeyboardLanguage;
             data["return_key_type"] = ReturnKey switch {
                 ReturnKeyType.Next => (JsonNode)"Next",
                 ReturnKeyType.Done => (JsonNode)"Done",
@@ -680,6 +691,17 @@ namespace UMI {
             data["value"] = value;
             Execute(data);
         }
+
+        /// <summary>
+        /// Set language to keyboard
+        /// </summary>
+        /// <param name="value">ISO language code</param>
+        public void SetLanguage(string value) {
+            var data = new JsonObject();
+            data["msg"] = SET_LANGUAGE;
+            data["value"] = value;
+            Execute(data);
+        }        
 
         /// <summary>
         /// Set text to field

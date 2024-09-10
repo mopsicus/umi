@@ -456,7 +456,7 @@ namespace UMI {
 #else
             return 1f;
 #endif
-        }              
+        }
 
         /// <summary>
         /// Update fonts

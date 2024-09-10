@@ -99,6 +99,8 @@ This is the basic script for using UMI. Add this script to a game object with `T
 
 `SetVisible(bool isVisible)` – switch field visibility
 
+`SetLanguage(string value)` – change keyboard language
+
 `SetRect(RectTransform inputRect)` – set new field size and position, this is useful if you want to move or resize the input field manually, at other times this is done automatically using the game object parameters
 
 `SetContentType(InputContentType type)` – set content type to field

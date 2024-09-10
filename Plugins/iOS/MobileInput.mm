@@ -13,6 +13,7 @@
 #define SET_PTEXT_COLOR @"SET_PTEXT_COLOR"
 #define SET_BG_COLOR @"SET_BG_COLOR"
 #define SET_READ_ONLY @"SET_READ_ONLY"
+#define SET_LANGUAGE @"SET_LANGUAGE"
 #define SET_RECT @"SET_RECT"
 #define ON_FOCUS @"ON_FOCUS"
 #define ON_UNFOCUS @"ON_UNFOCUS"
@@ -31,6 +32,13 @@ UIViewController *mainViewController = nil;
 /// Dict with inputs
 NSMutableDictionary *mobileInputList = nil;
 
+/// Custom textfield with overridden input mode
+@interface CustomTextField : UITextField
+
+/// Language code
+@property (nonatomic, strong) NSString *languageCode;
+@end
+
 /// Interface for placeholder
 @interface PlaceholderTextView : UITextView
 
@@ -42,6 +50,9 @@ NSMutableDictionary *mobileInputList = nil;
 
 /// Placeholder text color
 @property(nonatomic, strong) UIColor *placeholderColor UI_APPEARANCE_SELECTOR;
+
+/// Language code
+@property (nonatomic, strong) NSString *languageCode;
 @end
 
 /// MobileInput interface
@@ -107,6 +118,35 @@ NSMutableDictionary *mobileInputList = nil;
 - (BOOL)isFocused;
 @end
 
+/// Custom textfield implemenation
+@implementation CustomTextField
+
+/// Set language for keyboard
+/// - Parameter languageCode: ISO code
+- (void)setLanguageCode:(NSString *)languageCode {
+    _languageCode = languageCode;
+    if ([self isFirstResponder]) {
+        [self resignFirstResponder];
+        [self becomeFirstResponder];
+    }
+}
+
+/// Overridden input
+- (UITextInputMode *)textInputMode {
+    if (self.languageCode) {
+        for (UITextInputMode *keyboard in UITextInputMode.activeInputModes) {
+            if (keyboard.primaryLanguage) {
+                NSLocale *locale = [[NSLocale alloc] initWithLocaleIdentifier:keyboard.primaryLanguage];
+                if ([locale.languageCode isEqualToString:self.languageCode]) {
+                    return keyboard;
+                }
+            }
+        }
+    }
+    return [super textInputMode];
+}
+
+@end
 
 /// Placeholder interface
 @interface PlaceholderTextView ()
@@ -240,10 +280,35 @@ NSMutableDictionary *mobileInputList = nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+/// Set language for keyboard
+/// - Parameter languageCode: ISO code
+- (void)setLanguageCode:(NSString *)languageCode {
+    _languageCode = languageCode;
+    if ([self isFirstResponder]) {
+        [self resignFirstResponder];
+        [self becomeFirstResponder];
+    }
+}
+
+/// Overidden input
+- (UITextInputMode *)textInputMode {
+    if (self.languageCode) {
+        for (UITextInputMode *keyboard in UITextInputMode.activeInputModes) {
+            if (keyboard.primaryLanguage) {
+                NSLocale *locale = [[NSLocale alloc] initWithLocaleIdentifier:keyboard.primaryLanguage];
+                if ([locale.languageCode isEqualToString:self.languageCode]) {
+                    return keyboard;
+                }
+            }
+        }
+    }
+    return [super textInputMode];
+}
+
 @end
 
 
-/// MobileInput implimenation
+/// MobileInput implemenation
 @implementation MobileInput
 
 /// Init MobileInput
@@ -434,6 +499,13 @@ NSMutableDictionary *mobileInputList = nil;
     } else if ([msg isEqualToString:SET_VISIBLE]) {
         BOOL isVisible = [[data valueForKey:@"is_visible"] boolValue];
         [self setVisible:isVisible];
+    } else if ([msg isEqualToString:SET_LANGUAGE]) {
+        NSString *code = [data valueForKey:@"value"];
+        if (isMultiline) {
+            [(PlaceholderTextView *)editView setLanguageCode:code];
+        } else {
+            [(CustomTextField *)editView setLanguageCode:code];
+        }
     }
 }
 
@@ -512,7 +584,7 @@ NSMutableDictionary *mobileInputList = nil;
     float caretColor_r = [[data valueForKey:@"caret_color_r"] floatValue];
     float caretColor_g = [[data valueForKey:@"caret_color_g"] floatValue];
     float caretColor_b = [[data valueForKey:@"caret_color_b"] floatValue];
-    float caretColor_a = [[data valueForKey:@"caret_color_a"] floatValue];    
+    float caretColor_a = [[data valueForKey:@"caret_color_a"] floatValue];
     UIColor *caretColor = [UIColor colorWithRed:caretColor_r green:caretColor_g blue:caretColor_b alpha:caretColor_a];
     NSString *contentType = [data valueForKey:@"content_type"];
     NSString *alignment = [data valueForKey:@"align"];
@@ -525,6 +597,7 @@ NSMutableDictionary *mobileInputList = nil;
     BOOL password = NO;
     NSString *inputType = [data valueForKey:@"input_type"];
     NSString *keyboardType = [data valueForKey:@"keyboard_type"];
+    NSString *keyboardLanguage = [data valueForKey:@"keyboard_language"];
     UIKeyboardType keyType = UIKeyboardTypeDefault;
     if ([contentType isEqualToString:@"Autocorrected"]) {
         autoCorrection = YES;
@@ -665,6 +738,9 @@ NSMutableDictionary *mobileInputList = nil;
         if (isChangeCaret) {
             textView.tintColor = caretColor;
         }
+        if (![keyboardLanguage isEqualToString:@"default"]) {
+            textView.languageCode = keyboardLanguage;
+        }
         textView.delegate = self;
         if (keyType == UIKeyboardTypeEmailAddress) {
             textView.autocapitalizationType = UITextAutocapitalizationTypeNone;
@@ -675,7 +751,7 @@ NSMutableDictionary *mobileInputList = nil;
         }
         editView = textView;
     } else {
-        UITextField *textField = [[UITextField alloc] initWithFrame:CGRectMake(x, y, width, height)];
+        CustomTextField *textField = [[CustomTextField alloc] initWithFrame:CGRectMake(x, y, width, height)];
         textField.keyboardType = keyType;
         [textField setFont:uiFont];
         textField.delegate = self;
@@ -685,6 +761,9 @@ NSMutableDictionary *mobileInputList = nil;
         textField.backgroundColor = backgroundColor;
         if (isChangeCaret) {
             textField.tintColor = caretColor;
+        }
+        if (![keyboardLanguage isEqualToString:@"default"]) {
+            textField.languageCode = keyboardLanguage;
         }
         textField.returnKeyType = returnKeyType;
         textField.autocorrectionType = autoCorrection ? UITextAutocorrectionTypeYes : UITextAutocorrectionTypeNo;
