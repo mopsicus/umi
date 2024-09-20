@@ -35,6 +35,7 @@ This plugin creates native input fields above the canvas UI with all platform fe
 - hiding additional mobile input box (Android)
 - detect keyboard show/hide (with height)
 - detect screen orientation
+- keyboard language for input field
 - custom fonts support
 
 # 🚀 Usage
@@ -213,7 +214,6 @@ You can support the project by using any of the ways below:
 * TON: UQDVp346KxR6XxFeYc3ksZ_jOuYjztg7b4lEs6ulEWYmJb0f
 * Visa, Mastercard via [Boosty](https://boosty.to/mopsicus/donate)
 * MIR via [CloudTips](https://pay.cloudtips.ru/p/9f507669)
-* [Paypal](https://www.paypal.me/mopsicus)
 
 # ✉️ Contact
 
