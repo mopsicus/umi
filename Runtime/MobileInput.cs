@@ -405,6 +405,7 @@ namespace UMI {
 #if UMI_DEBUG
             Debug.Log($"[UMI] init");
 #endif
+            _isInited = true;
             var state = PlayerPrefs.GetInt(INIT_KEY, 0);
             if (state == 0) {
                 UpdateFonts();
