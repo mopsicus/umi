@@ -28,6 +28,9 @@ public class Bootstrap : MonoBehaviour {
 }
 ```
 
+> [!IMPORTANT]
+> UMI will not work with the **Render Over Native UI** option enabled.
+
 ### MobileInput.cs
 
 This script manages the interaction between the Unity app and native part. It contains references and identifiers of all MobileInputField scripts and some additional functions.
@@ -100,6 +103,8 @@ This is the basic script for using UMI. Add this script to a game object with `T
 `SetVisible(bool isVisible)` – switch field visibility
 
 `SetLanguage(string value)` – change keyboard language
+
+`SetCaret` – set caret position
 
 `SetRect(RectTransform inputRect)` – set new field size and position, this is useful if you want to move or resize the input field manually, at other times this is done automatically using the game object parameters
 

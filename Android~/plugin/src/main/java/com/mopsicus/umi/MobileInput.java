@@ -47,6 +47,7 @@ public class MobileInput {
     private static final String SET_PTEXT_COLOR = "SET_PTEXT_COLOR";
     private static final String SET_BG_COLOR = "SET_BG_COLOR";
     private static final String SET_READ_ONLY = "SET_READ_ONLY";
+    private static final String SET_CARET = "SET_CARET";
     private static final String SET_RECT = "SET_RECT";
     private static final String SET_FOCUS = "SET_FOCUS";
     private static final String ON_FOCUS = "ON_FOCUS";
@@ -183,6 +184,10 @@ public class MobileInput {
                 case SET_BG_COLOR:
                     edit.setBackgroundColor(this.getColor(data));
                     break;
+                case SET_CARET:
+                    Integer position = data.getInt("value");
+                    this.setCaret(position);
+                    break;                    
                 case SET_READ_ONLY:
                     boolean value = data.getBoolean("value");
                     edit.setInputType(value ? EditorInfo.TYPE_NULL : editInputType);
@@ -207,7 +212,7 @@ public class MobileInput {
                     break;
                 case SET_LANGUAGE:
                     String code = data.getString("value");
-                    setKeyboardLanguage(code);
+                    this.setKeyboardLanguage(code);
                     break;
                 case ANDROID_KEY_DOWN:
                     String strKey = data.getString("key");
@@ -446,7 +451,7 @@ public class MobileInput {
                     }
                     sendData(editData);
                 }
-                SetFocus(isFocus);
+                this.SetFocus(isFocus);
                 JSONObject focusData = new JSONObject();
                 try {
                     focusData.put("msg", (isFocus) ? ON_FOCUS : ON_UNFOCUS);
@@ -641,6 +646,21 @@ public class MobileInput {
     }
 
     /**
+     * Set caret position
+     * 
+     * @param position Position in string
+     */
+    private void setCaret(Integer position) {
+        int length = edit.getText().length();
+        if (position < 0) {
+            position = 0;
+        } else if (position > length) {
+            position = length;
+        }
+        edit.setSelection(position, position);
+    }
+
+    /**
      * Remove MobileInput
      */
     private void Remove() {
@@ -658,6 +678,7 @@ public class MobileInput {
     private void SetText(String newText) {
         if (edit != null) {
             edit.setText(newText);
+            edit.setSelection(edit.getText().length());
         }
     }
 

@@ -76,6 +76,9 @@ public class Bootstrap : MonoBehaviour {
 > [!NOTE] 
 > Make sure you do this before creating all input fields, otherwise UMI will raise an exception.
 
+> [!IMPORTANT]
+> UMI will not work with the **Render Over Native UI** option enabled.
+
 ### Setup
 
 To begin using UMI in your project, add `MobileInputField` script to game object with `TMP Input field`.
@@ -142,6 +145,7 @@ With `OnKeyboardAction` you can control UI elements, such as moving the input fi
 - `SetContentType` – change input field content type
 - `SetReadonly` – change readonly mode
 - `SetLanguage` – change keyboard language
+- `SetCaret` – set caret position
 
 ### How to use custom fonts
 

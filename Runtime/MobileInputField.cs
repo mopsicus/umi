@@ -139,6 +139,11 @@ namespace UMI {
         const string SET_LANGUAGE = "SET_LANGUAGE";
 
         /// <summary>
+        /// Set caret position
+        /// </summary>
+        const string SET_CARET = "SET_CARET";
+
+        /// <summary>
         /// Event when text changing in InputField
         /// </summary>
         const string TEXT_CHANGE = "TEXT_CHANGE";
@@ -173,7 +178,7 @@ namespace UMI {
         /// <summary>
         /// Custom keyboard language, ISO code
         /// </summary>
-        public string KeyboardLanguage = "default";        
+        public string KeyboardLanguage = "default";
 
         /// <summary>
         /// Background color
@@ -382,7 +387,7 @@ namespace UMI {
             if (_initStarted) {
                 yield break;
             }
-            _initStarted = true;            
+            _initStarted = true;
             yield return WaitForEndOfFrame;
             PrepareNativeEdit();
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
@@ -416,6 +421,9 @@ namespace UMI {
                     var inputRect = this._inputObjectText.rectTransform.rect;
                     for (var i = 0; i < touchCount; i++) {
                         if (!inputRect.Contains(Input.touches[i].position)) {
+#if UMI_DEBUG
+                            Debug.Log($"[UMI] manual hide control: {IsManualHideControl}");
+#endif                             
                             if (!IsManualHideControl) {
                                 Hide();
                             }
@@ -610,7 +618,7 @@ namespace UMI {
                 ReturnKeyType.Search => (JsonNode)"Search",
                 ReturnKeyType.Send => (JsonNode)"Send",
                 _ => (JsonNode)"Default",
-            };
+            };           
             Execute(data);
         }
 #endif
@@ -701,7 +709,18 @@ namespace UMI {
             data["msg"] = SET_LANGUAGE;
             data["value"] = value;
             Execute(data);
-        }        
+        }
+
+        /// <summary>
+        /// Set caret position
+        /// </summary>
+        /// <param name="value">Position in string</param>
+        public void SetCaret(int value) {
+            var data = new JsonObject();
+            data["msg"] = SET_CARET;
+            data["value"] = value;
+            Execute(data);
+        }
 
         /// <summary>
         /// Set text to field

@@ -8,6 +8,7 @@
 #define CREATE @"CREATE_EDIT"
 #define REMOVE @"REMOVE_EDIT"
 #define SET_TEXT @"SET_TEXT"
+#define SET_CARET @"SET_CARET"
 #define SET_CONTENT_TYPE @"SET_CONTENT_TYPE"
 #define SET_TEXT_COLOR @"SET_TEXT_COLOR"
 #define SET_PTEXT_COLOR @"SET_PTEXT_COLOR"
@@ -464,6 +465,20 @@ NSMutableDictionary *mobileInputList = nil;
             [(PlaceholderTextView *)editView setTextColor:color];
         } else {
             [(UITextField *)editView setTextColor:color];
+        }
+    } else if ([msg isEqualToString:SET_CARET]) {
+        int position = [[data valueForKey:@"value"] intValue];
+        NSInteger length = (isMultiline) ? [(PlaceholderTextView *)editView text].length : [(UITextField *)editView text].length;
+        if (position < 0) {
+            position = 0;
+        } else if (position > length) {
+            position = (int)length;
+        }
+        if (isMultiline) {
+            [(PlaceholderTextView *)editView setSelectedRange: NSMakeRange(position, 0)];
+        } else {
+            UITextPosition *tpos = [(UITextField *)editView positionFromPosition:[(UITextField *)editView beginningOfDocument] offset:position];
+            [(UITextField *)editView setSelectedTextRange: [(UITextField *)editView textRangeFromPosition:tpos toPosition:tpos]];
         }
     } else if ([msg isEqualToString:SET_PTEXT_COLOR]) {
         UIColor *color = [self getColor:data];

@@ -76,6 +76,9 @@ public class Bootstrap : MonoBehaviour {
 > [!NOTE] 
 > Убедитесь что вы сделали это до создания и появления всех полей ввода, иначе UMI выдаст ошибку.
 
+> [!IMPORTANT]
+> UMI не будет работать с включенной опцией **Render Over Native UI**.
+
 ### Настройка
 
 Для начала использования UMI в вашем проекте, добавьте скрипт `MobileInputField` на объект с полем ввода `TMP Input field`.
@@ -141,6 +144,7 @@ public class Bootstrap : MonoBehaviour {
 - `SetContentType` – изменение типа поля ввода
 - `SetReadonly` – изменение состояния "только для чтения"
 - `SetLanguage` – изменение языка клавиатуры
+- `SetCaret` – установка позиции курсора
 
 ### Как использовать свои шрифты
 

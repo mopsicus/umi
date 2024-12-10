@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.5] - 2024-12-10
+- ### Added
+- Set caret position
+
 ## [2.0.4] - 2024-09-10
 - ### Added
 - Change keyboard language
