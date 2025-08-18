@@ -330,7 +330,7 @@ namespace UMI {
                 return plugin.CallStatic<bool>("checkIsRotateLocked");
             }
         }
-        
+
         /// <summary>
         /// Return type of screen navigation
         /// 
@@ -343,7 +343,7 @@ namespace UMI {
             using (var plugin = new AndroidJavaClass(PLUGIN_PACKAGE)) {
                 return plugin.CallStatic<int>("getBarType");
             }
-        }   
+        }
 
         /// <summary>
         /// Get height of navigation bar
@@ -353,7 +353,7 @@ namespace UMI {
             using (var plugin = new AndroidJavaClass(PLUGIN_PACKAGE)) {
                 return plugin.CallStatic<int>("getBarHeight");
             }
-        }               
+        }
 #endif
 
         /// <summary>
