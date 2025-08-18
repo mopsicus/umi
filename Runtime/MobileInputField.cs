@@ -8,6 +8,7 @@ using UnityEngine.Events;
 #if !UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using LegacyTouch = UnityEngine.Touch;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -978,7 +979,7 @@ namespace UMI {
         /// <summary>
         /// Convenience enumerator for getting touches from the legacy input manager
         /// </summary>
-        private IEnumerable<Touch> GetLegacyInputManagerTouches() {
+        private IEnumerable<LegacyTouch> GetLegacyInputManagerTouches() {
             for (var i = 0; i < Input.touchCount; i++) {
                 yield return Input.GetTouch(i);
             }
