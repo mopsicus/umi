@@ -14,9 +14,7 @@ namespace UMI {
             var manifestPath = Path.Combine(path, "src", "main", "AndroidManifest.xml");
 
             if (!File.Exists(manifestPath)) {
-#if UMI_DEBUG
-                Debug.LogWarning($"[UMI] Unable to locate and patch your Android Manifest. Please refer to the documentation and ensure you've updated your AndroidManifest.xml manually with the suggested changes.");
-#endif
+                WarnAboutFailure("Unable to locate and patch your Android Manifest");
                 return;
             }
 
@@ -36,13 +34,18 @@ namespace UMI {
                 );
 
             if (activity == null) {
-#if UMI_DEBUG
-                Debug.LogWarning($"[UMI] Unable to locate the main launcher activity in AndroidManifest.xml.");
-#endif
+                WarnAboutFailure("Unable to locate the main launcher activity in your AndroidManifest.xml");
                 return;
             }
             activity.SetAttributeValue(android + "windowSoftInputMode", "adjustNothing");
             doc.Save(manifestPath);
+#if UMI_DEBUG
+            Debug.Log($"[UMI] Patched AndroidManifest.xml at {manifestPath} with 'adjustNothing' for windowSoftInputMode.");
+#endif
+
+            void WarnAboutFailure(string reason) {
+                Debug.LogWarning($"[UMI] {reason}. Please refer to the documentation and ensure you've updated your AndroidManifest.xml manually with the required changes.");
+            }
         }
     }
 }
