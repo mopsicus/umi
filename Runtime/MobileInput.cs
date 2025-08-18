@@ -28,10 +28,12 @@ namespace UMI {
     /// </summary>
     public abstract class MobileInputReceiver : MonoBehaviour {
 
+#if !UNITY_EDITOR
         /// <summary>
         /// Current input id
         /// </summary>
         int _id = 0;
+#endif
 
         /// <summary>
         /// Init input and register interface
@@ -270,11 +272,17 @@ namespace UMI {
                     GetReceiver(id).Send(response);
                 }
                 _data = null;
-            } catch (Exception e) {
-#if UMI_DEBUG
-                Debug.LogError($"[UMI] received error: {e}");
-#endif
             }
+#if UMI_DEBUG
+            catch (Exception e) {
+                Debug.LogError($"[UMI] received error: {e}");
+            }
+#else
+            catch {
+                // Ignored
+            }
+#endif
+
         }
 
         /// <summary>
@@ -301,11 +309,16 @@ namespace UMI {
                 } else {
                     OnData(info);
                 }
-            } catch (Exception e) {
-#if UMI_DEBUG
-                Debug.LogError($"[UMI] raw data error: data = {data}, error = {e}");
-#endif
             }
+#if UMI_DEBUG
+            catch (Exception e) {
+                Debug.LogError($"[UMI] raw data error: data = {data}, error = {e}");
+            }
+#else
+            catch {
+                // Ignored
+            }
+#endif
         }
 
 #if UNITY_ANDROID
