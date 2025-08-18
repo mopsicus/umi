@@ -2,7 +2,8 @@
     "name": "UMI.Runtime",
     "rootNamespace": "UMI",
     "references": [
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

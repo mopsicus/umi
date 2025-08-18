@@ -5,6 +5,13 @@ using TMPro;
 using UnityEngine;
 using NiceJson;
 using UnityEngine.Events;
+#if !UNITY_EDITOR && ENABLE_INPUT_SYSTEM 
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.EnhancedTouch;
+using InputSystemTouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
+using System.Linq;
+#endif
 
 namespace UMI {
 
@@ -270,6 +277,18 @@ namespace UMI {
         /// </summary>
         CultureInfo _cultureInfo = CultureInfo.InvariantCulture;
 
+#if UNITY_ANDROID && !UNITY_EDITOR && ENABLE_INPUT_SYSTEM
+        /// <summary>
+        /// Last input character from the 'current' keyboard
+        /// </summary>
+        char? _lastInputChar = null;
+
+        /// <summary>
+        /// The keyboard we are listening to for input strings
+        /// </summary>
+        Keyboard _boundKeyboard = null;
+#endif
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -282,6 +301,15 @@ namespace UMI {
                 throw new MissingComponentException();
             }
             _inputObjectText = _inputObject.textComponent;
+
+#if UMI_DEBUG && !UNITY_EDITOR
+#if ENABLE_INPUT_SYSTEM
+            Debug.Log($"[UMI] Input type: (New) Input System");
+#else
+            Debug.Log($"[UMI] Input type: (Legacy) Input Manager");
+#endif
+#endif
+
         }
 
         /// <summary>
@@ -416,11 +444,11 @@ namespace UMI {
 #endif
             if (_inputObject != null && _isMobileInputCreated) {
 #if !UNITY_EDITOR
-                var touchCount = Input.touchCount;
-                if (touchCount > 0) {
+                var tapCount = GetTapCount();
+                if (tapCount > 0) {
                     var inputRect = this._inputObjectText.rectTransform.rect;
-                    for (var i = 0; i < touchCount; i++) {
-                        if (!inputRect.Contains(Input.touches[i].position)) {
+                    for (var i = 0; i < tapCount; i++) {
+                        if (!inputRect.Contains(GetTapPosition(i))) {
 #if UMI_DEBUG
                             Debug.Log($"[UMI] manual hide control: {IsManualHideControl}");
 #endif                             
@@ -824,19 +852,121 @@ namespace UMI {
         /// Keyboard handler
         /// </summary>
         private void UpdateForceKeyeventForAndroid() {
-            if (Input.anyKeyDown) {
-                if (Input.GetKeyDown(KeyCode.Backspace)) {
+
+            var inputState = GetAndroidInputState();
+
+            if (inputState.AnyKey) {
+                if (inputState.AndroidBack) {
+                    if (!IsManualHideControl) {
+#if UMI_DEBUG
+                    Debug.Log("[UMI] Android back button pressed, hiding keyboard");
+#endif
+                        Hide();
+                    }
+                } else if (inputState.Backspace) {
                     ForceSendKeydownAndroid("backspace");
                 } else {
-                    foreach (var c in Input.inputString) {
+                    foreach (var c in inputState.InputString) {
                         if (c == '\n') {
                             ForceSendKeydownAndroid("enter");
                         } else {
-                            ForceSendKeydownAndroid(Input.inputString);
+                            ForceSendKeydownAndroid(c.ToString());
                         }
                     }
                 }
             }
+        }
+
+        private struct AndroidInputState {
+            public bool AnyKey;
+            public bool AndroidBack;
+            public bool Backspace;
+            public string InputString;
+        }
+
+        /// <summary>
+        /// Gets the current state of input for Android specific logic, in an input-system-agnostic way
+        /// </summary>
+        private AndroidInputState GetAndroidInputState() {
+            
+#if ENABLE_INPUT_SYSTEM
+            // Ensure we are listening to the most 'current' keyboard...
+            if (Keyboard.current != _boundKeyboard) {
+
+#if UMI_DEBUG
+                Debug.Log($"[UMI] Bound Keyboard changed from '{_boundKeyboard}' to '{Keyboard.current}'");
+#endif
+
+                if (_boundKeyboard != null) {
+                    _boundKeyboard.onTextInput -= OnTextInput;
+                }
+
+                _boundKeyboard = Keyboard.current;
+
+                if (_boundKeyboard != null) {
+                    _boundKeyboard.onTextInput += OnTextInput;
+                }
+
+                /// <summary>
+                /// Store the last input character
+                /// </summary>
+                void OnTextInput(char c) {
+                    _lastInputChar = c;
+                }
+            }
+
+            return new AndroidInputState
+            {
+                AnyKey = InputSystem.devices.OfType<Keyboard>().Any(k => k.anyKey.wasPressedThisFrame),
+                AndroidBack = InputSystem.devices.OfType<Keyboard>().Any(k => k.escapeKey.wasPressedThisFrame),
+                Backspace = InputSystem.devices.OfType<Keyboard>().Any(k => k.backspaceKey.wasPressedThisFrame),
+                InputString = _lastInputChar.ToString()
+            };
+#else
+            return new AndroidInputState
+            {
+                AnyKey = Input.anyKeyDown,
+                AndroidBack = Input.GetKeyDown(KeyCode.Escape),
+                Backspace = Input.GetKeyUp(KeyCode.Backspace),
+                InputString = Input.inputString
+            };
+#endif
+        }
+#endif
+
+#if !UNITY_EDITOR
+
+        /// <summary>
+        /// Gets the count of taps in an input-system-agnostic way
+        /// </summary>
+        private int GetTapCount() {
+#if ENABLE_INPUT_SYSTEM
+            if (EnhancedTouchSupport.enabled) {
+                return InputSystemTouch.activeTouches.Count(t => t.isTap);
+            } else {
+                return InputSystem.devices.OfType<Touchscreen>().Count(t => t.touches.Any(touch => touch.tap.wasReleasedThisFrame));
+            }
+#else
+            return Input.touchCount;
+#endif
+        }
+
+        /// <summary>
+        /// Gets the position of a specific tap in an input-system-agnostic way
+        /// </summary>
+        private Vector2 GetTapPosition(int index) {
+#if ENABLE_INPUT_SYSTEM
+            if (EnhancedTouchSupport.enabled) {
+                return InputSystemTouch.activeTouches.Where(t => t.isTap).ElementAtOrDefault(index).screenPosition;
+            } else {
+                return InputSystem.devices.OfType<Touchscreen>().Where(t => t.touches.Any(touch => touch.tap.wasReleasedThisFrame))
+                    .SelectMany(t => t.touches)
+                    .ElementAtOrDefault(index)
+                    .position.ReadValue();
+            }
+#else
+            return Input.GetTouch(index).position;
+#endif
         }
 #endif
 
