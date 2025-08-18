@@ -163,17 +163,7 @@ The iOS plugin is simple, with only 3 files. If you want to know how it works un
 
 Android plugin is a compiled AAR library. All sources are available in [Android~](./Android~/) folder. You can edit the android part and recompile the library to suit your needs.
 
-Make sure your `AndroidManifest.xml` has the following setting:
-
-```xml
-<activity android:name="com.unity3d.player.UnityPlayerActivity" android:label="@string/app_name" android:windowSoftInputMode="adjustNothing">
-    ...
-    <meta-data android:name="unityplayer.ForwardNativeEventsToDalvik" android:value="true" />
-    ...
-</activity>
-```
-
-The `adjustNothing` option has been added to prevent the screen from shifting up when the keyboard is displayed.
+Your Android Manifest will be patched automatically at build time with the required settings. Refer to the [docs](Documentation~/index.md#manifest) for details on what is being changed.
 
 ### Unity
 
