@@ -5,12 +5,15 @@ using TMPro;
 using UnityEngine;
 using NiceJson;
 using UnityEngine.Events;
-#if !UNITY_EDITOR && ENABLE_INPUT_SYSTEM 
+#if !UNITY_EDITOR
+using System.Collections.Generic;
+using System.Linq;
+#if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.EnhancedTouch;
 using InputSystemTouch = UnityEngine.InputSystem.EnhancedTouch.Touch;
-using System.Linq;
+#endif
 #endif
 
 namespace UMI {
@@ -947,7 +950,7 @@ namespace UMI {
                 return InputSystem.devices.OfType<Touchscreen>().Count(t => t.touches.Any(touch => touch.tap.wasReleasedThisFrame));
             }
 #else
-            return Input.touchCount;
+            return GetLegacyInputManagerTouches().Count(t => t.phase == TouchPhase.Ended);
 #endif
         }
 
@@ -965,8 +968,20 @@ namespace UMI {
                     .position.ReadValue();
             }
 #else
-            return Input.GetTouch(index).position;
+            return GetLegacyInputManagerTouches()
+                .Where(t => t.phase == TouchPhase.Ended)
+                .ElementAtOrDefault(index)
+                .position;
 #endif
+        }
+
+        /// <summary>
+        /// Convenience enumerator for getting touches from the legacy input manager
+        /// </summary>
+        private IEnumerable<Touch> GetLegacyInputManagerTouches() {
+            for (var i = 0; i < Input.touchCount; i++) {
+                yield return Input.GetTouch(i);
+            }
         }
 #endif
 
