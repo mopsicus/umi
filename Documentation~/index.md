@@ -161,20 +161,18 @@ If you need to recompile AAR library, for example, change `compileSdk` or `minSd
 
 ### Manifest
 
-Patch manifest and make sure your `AndroidManifest.xml` has the following setting:
-
-```xml
-<activity android:name="com.unity3d.player.UnityPlayerActivity" android:label="@string/app_name" android:windowSoftInputMode="adjustNothing">
-    ...
-    <meta-data android:name="unityplayer.ForwardNativeEventsToDalvik" android:value="true" />
-    ...
-</activity>
-```
-
-The `adjustNothing` option has been added to prevent the screen from shifting up when the keyboard is displayed. 
+UMI will patch your manifest at build time with the required settings in a way that plays nicely with other plugins/frameworks. It adds the `adjustNothing` option to your entry activity which will prevent the screen from shifting up when the keyboard is displayed.
 
 > [!NOTE] 
-> Activity name may vary
+> If UMI is unable to patch your manifest automatically, it'll warn you about it when you build your game. In this case, you can make the changes to your manifest yourself. Make sure your `AndroidManifest.xml` has the following setting (Your activity name may vary):
+> ```xml
+><activity android:name="com.unity3d.player.UnityPlayerActivity" android:label="@string/app_name" android:windowSoftInputMode="adjustNothing">
+>    ...
+>    <meta-data android:name="unityplayer.ForwardNativeEventsToDalvik" android:value="true" />
+>    ...
+></activity>
+>```
+
 
 ## iOS
 
