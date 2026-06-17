@@ -6,6 +6,9 @@ using UnityEngine;
 using NiceJson;
 using UnityEngine.Events;
 
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
+
 namespace UMI {
 
     /// <summary>
@@ -274,6 +277,7 @@ namespace UMI {
         /// Constructor
         /// </summary>
         void Awake() {
+            //EnhancedTouchSupport.Enable();
             _inputObject = GetComponent<TMP_InputField>();
             if ((object)_inputObject == null) {
 #if UMI_DEBUG
@@ -410,6 +414,35 @@ namespace UMI {
         /// If changed - send to plugin
         /// It's need when app rotate on input field chage position
         /// </summary>
+        
+
+/*
+void Update() {
+#if UNITY_ANDROID && !UNITY_EDITOR
+    UpdateForceKeyeventForAndroid();
+#endif
+
+    if (_inputObject != null && _isMobileInputCreated) {
+#if !UNITY_EDITOR
+        var inputRect = _inputObjectText.rectTransform.rect;
+
+        foreach (var touch in UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches) {
+            if (!inputRect.Contains(touch.screenPosition)) {
+#if UMI_DEBUG
+                Debug.Log($"[UMI] manual hide control: {IsManualHideControl}");
+#endif
+                if (!IsManualHideControl) {
+                    Hide();
+                }
+                return;
+            }
+        }
+#endif
+        SetRectNative(_inputObjectText.rectTransform);
+    }
+}
+*/
+
         void Update() {
 #if UNITY_ANDROID && !UNITY_EDITOR
             UpdateForceKeyeventForAndroid();
@@ -435,6 +468,7 @@ namespace UMI {
                 SetRectNative(_inputObjectText.rectTransform);
             }
         }
+
 
         /// <summary>
         /// Prepare config
@@ -808,36 +842,49 @@ namespace UMI {
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
+    
+    private void ForceSendKeydownAndroid(string key)
+    {
+        var data = new JsonObject
+        {
+            ["msg"] = ANDROID_KEY_DOWN,
+            ["key"] = key
+        };
+        Execute(data);
+    }
 
-        /// <summary>
-        /// Send android button state
-        /// </summary>
-        /// <param name="key">Code</param>
-        private void ForceSendKeydownAndroid(string key) {
-            var data = new JsonObject();
-            data["msg"] = ANDROID_KEY_DOWN;
-            data["key"] = key;
-            Execute(data);
-        }
+    /// <summary>
+    /// Keyboard handler
+    /// </summary>
+    private void UpdateForceKeyeventForAndroid()
+    {
+        var keyboard = Keyboard.current;
+        if (keyboard == null) return;
 
-        /// <summary>
-        /// Keyboard handler
-        /// </summary>
-        private void UpdateForceKeyeventForAndroid() {
-            if (Input.anyKeyDown) {
-                if (Input.GetKeyDown(KeyCode.Backspace)) {
-                    ForceSendKeydownAndroid("backspace");
-                } else {
-                    foreach (var c in Input.inputString) {
-                        if (c == '\n') {
-                            ForceSendKeydownAndroid("enter");
-                        } else {
-                            ForceSendKeydownAndroid(Input.inputString);
-                        }
+        // Check for any key press
+        if (keyboard.anyKey.wasPressedThisFrame)
+        {
+            if (keyboard.backspaceKey.wasPressedThisFrame)
+            {
+                ForceSendKeydownAndroid("backspace");
+            }
+            else if (keyboard.enterKey.wasPressedThisFrame)
+            {
+                ForceSendKeydownAndroid("enter");
+            }
+            else
+            {
+                foreach (var key in keyboard.allKeys)
+                {
+                    if (key.wasPressedThisFrame)
+                    {
+                        ForceSendKeydownAndroid(key.displayName.ToLower());
+                        break; // Avoid sending multiple keys at once
                     }
                 }
             }
         }
+    }
 #endif
 
     }
