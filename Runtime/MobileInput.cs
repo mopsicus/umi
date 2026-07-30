@@ -31,7 +31,21 @@ namespace UMI {
         /// <summary>
         /// Current input id
         /// </summary>
-        int _id = 0;
+        int _id = -1;
+
+        /// <summary>
+        /// Receiver registration state
+        /// </summary>
+        bool _isRegistered = false;
+
+        /// <summary>
+        /// Check whether native messages can safely use this receiver id
+        /// </summary>
+        protected bool IsRegistered {
+            get {
+                return _isRegistered;
+            }
+        }
 
         /// <summary>
         /// Init input and register interface
@@ -40,6 +54,7 @@ namespace UMI {
 #if !UNITY_EDITOR
             _id = MobileInput.Register(this);
 #endif
+            _isRegistered = true;
         }
 
         /// <summary>
@@ -47,8 +62,11 @@ namespace UMI {
         /// </summary>
         protected virtual void OnDestroy() {
 #if !UNITY_EDITOR
-            MobileInput.RemoveReceiver(_id);
+            if (_isRegistered) {
+                MobileInput.RemoveReceiver(_id);
+            }
 #endif
+            _isRegistered = false;
         }
 
         /// <summary>
@@ -57,7 +75,9 @@ namespace UMI {
         /// <param name="data">Data</param>
         protected void Execute(JsonObject data) {
 #if !UNITY_EDITOR
-            MobileInput.Execute(_id, data);
+            if (_isRegistered) {
+                MobileInput.Execute(_id, data);
+            }
 #endif
         }
 
@@ -174,6 +194,30 @@ namespace UMI {
         /// Flag to check init state
         /// </summary>
         static bool _isInited = false;
+
+        /// <summary>
+        /// Current application focus state
+        /// </summary>
+        static bool _applicationHasFocus = true;
+
+        /// <summary>
+        /// Current application pause state
+        /// </summary>
+        static bool _applicationPaused = false;
+
+        /// <summary>
+        /// Notify inputs when temporary application visibility changes
+        /// </summary>
+        internal static event Action OnApplicationVisibilityChange = delegate { };
+
+        /// <summary>
+        /// Whether native inputs may currently be displayed
+        /// </summary>
+        internal static bool CanShowInputs {
+            get {
+                return _applicationHasFocus && !_applicationPaused;
+            }
+        }
 
 #if UNITY_IOS
         /// <summary>
@@ -360,7 +404,9 @@ namespace UMI {
         /// </summary>
         /// <param name="id">Input id</param>
         public static void RemoveReceiver(int id) {
-            _instance._inputs.Remove(id);
+            if ((object)_instance != null) {
+                _instance._inputs.Remove(id);
+            }
         }
 
         /// <summary>
@@ -406,6 +452,8 @@ namespace UMI {
             Debug.Log($"[UMI] init");
 #endif
             _isInited = true;
+            _applicationHasFocus = Application.isFocused;
+            _applicationPaused = false;
             var state = PlayerPrefs.GetInt(INIT_KEY, 0);
             if (state == 0) {
                 UpdateFonts();
@@ -500,7 +548,22 @@ namespace UMI {
         /// <summary>
         /// Handler to check data on focus change
         /// </summary>
+        void OnApplicationFocus(bool hasFocus) {
+            if (_applicationHasFocus == hasFocus) {
+                return;
+            }
+            _applicationHasFocus = hasFocus;
+            OnApplicationVisibilityChange();
+        }
+
+        /// <summary>
+        /// Handler to preserve callbacks and native visibility across app pause
+        /// </summary>
         void OnApplicationPause(bool pauseStatus) {
+            if (_applicationPaused != pauseStatus) {
+                _applicationPaused = pauseStatus;
+                OnApplicationVisibilityChange();
+            }
             if (!pauseStatus) {
                 if (_data != null) {
                     OnData(_data);

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.6] - 2026-07-28
+- ### Fixed
+- Native input lifecycle and visibility races
+
 ## [2.0.5] - 2024-12-10
 - ### Added
 - Set caret position

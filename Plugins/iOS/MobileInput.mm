@@ -331,13 +331,23 @@ NSMutableDictionary *mobileInputList = nil;
     NSDictionary *message = [Bridge jsonToDict:data];
     NSString *msg = [message valueForKey:@"msg"];
     if ([msg isEqualToString:CREATE]) {
+        NSNumber *key = [NSNumber numberWithInt:inputId];
+        if ([mobileInputList objectForKey:key]) {
+            return;
+        }
         MobileInput *input = [[MobileInput alloc] initWith:mainViewController andTag:inputId];
+        [mobileInputList setObject:input forKey:key];
         [input create:message];
-        [mobileInputList setObject:input forKey:[NSNumber numberWithInt:inputId]];
     } else {
-        MobileInput *input = [mobileInputList objectForKey:[NSNumber numberWithInt:inputId]];
+        NSNumber *key = [NSNumber numberWithInt:inputId];
+        MobileInput *input = [mobileInputList objectForKey:key];
         if (input) {
-            [input processData:message];
+            if ([msg isEqualToString:REMOVE]) {
+                [input remove];
+                [mobileInputList removeObjectForKey:key];
+            } else {
+                [input processData:message];
+            }
         }
     }
 }
@@ -608,6 +618,8 @@ NSMutableDictionary *mobileInputList = nil;
     BOOL withClearButton = [[data valueForKey:@"with_clear_button"] boolValue];
     isMultiline = [[data valueForKey:@"multiline"] boolValue];
     BOOL isChangeCaret = [[data valueForKey:@"caret_color"] boolValue];
+    NSNumber *visibleValue = [data valueForKey:@"is_visible"];
+    BOOL isVisible = visibleValue ? [visibleValue boolValue] : YES;
     BOOL autoCorrection = NO;
     BOOL password = NO;
     NSString *inputType = [data valueForKey:@"input_type"];
@@ -804,6 +816,7 @@ NSMutableDictionary *mobileInputList = nil;
         }
         editView = textField;
     }
+    editView.hidden = !isVisible;
     [mainViewController.view addSubview:editView];
     NSMutableDictionary *msg = [[NSMutableDictionary alloc] init];
     [msg setValue:READY forKey:@"msg"];

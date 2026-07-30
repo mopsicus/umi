@@ -61,6 +61,17 @@ namespace UMI {
             Send
         }
 
+        /// <summary>
+        /// Native input initialization state
+        /// </summary>
+        enum InitializationState {
+            NotStarted,
+            Scheduled,
+            WaitingForReady,
+            Ready,
+            Destroyed
+        }
+
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
         /// <summary>
         /// InputField create event
@@ -221,14 +232,14 @@ namespace UMI {
         public UnityEvent OnReturnPressedEvent = null;
 
         /// <summary>
-        /// Mobile input creation flag
+        /// Native input initialization state
         /// </summary>
-        bool _isMobileInputCreated = false;
+        InitializationState _initializationState = InitializationState.NotStarted;
 
         /// <summary>
-        /// Mobile input init start flag
+        /// Currently scheduled initialization coroutine
         /// </summary>
-        bool _initStarted = false;
+        Coroutine _initializationCoroutine = null;
 
         /// <summary>
         /// InputField object
@@ -246,9 +257,9 @@ namespace UMI {
         bool _isFocusOnCreate = false;
 
         /// <summary>
-        /// Set visible on create flag
+        /// Last visibility requested through the public API
         /// </summary>
-        bool _isVisibleOnCreate = true;
+        bool _requestedVisible = true;
 
         /// <summary>
         /// Last field position cache
@@ -282,6 +293,7 @@ namespace UMI {
                 throw new MissingComponentException();
             }
             _inputObjectText = _inputObject.textComponent;
+            MobileInput.OnApplicationVisibilityChange += OnApplicationVisibilityChanged;
         }
 
         /// <summary>
@@ -289,20 +301,19 @@ namespace UMI {
         /// </summary>
         protected override void Start() {
             base.Start();
-            if (!_initStarted) {
-                StartCoroutine(InitProcess());
-            }
+            RequestInitialization();
         }
 
         /// <summary>
         /// Show native on enable
         /// </summary>
         void OnEnable() {
-            if (_isMobileInputCreated) {
+            if (_initializationState == InitializationState.Ready) {
                 SetRectNative(this._inputObjectText.rectTransform);
-                SetVisible(true);
-            } else if (!_initStarted) {
-                StartCoroutine(InitProcess());
+                ApplyNativeVisibility();
+                ApplyFocusOnCreate();
+            } else if (_initializationState == InitializationState.NotStarted) {
+                RequestInitialization();
             }
         }
 
@@ -310,9 +321,13 @@ namespace UMI {
         /// Hide native on disable
         /// </summary>
         void OnDisable() {
-            if (_isMobileInputCreated) {
-                SetFocus(false);
-                SetVisible(false);
+            if (_initializationState == InitializationState.Scheduled) {
+                CancelScheduledInitialization();
+            } else if (_initializationState == InitializationState.Ready) {
+                SetFocusNative(false);
+                ApplyNativeVisibility();
+            } else if (_initializationState == InitializationState.WaitingForReady) {
+                ApplyNativeVisibility();
             }
         }
 
@@ -320,31 +335,19 @@ namespace UMI {
         /// Destructor
         /// </summary>
         protected override void OnDestroy() {
+            MobileInput.OnApplicationVisibilityChange -= OnApplicationVisibilityChanged;
+            CancelScheduledInitialization();
             RemoveNative();
             base.OnDestroy();
         }
 
-#if UNITY_ANDROID
         /// <summary>
-        /// Handler for app focus lost
+        /// Reapply logical visibility after app focus/pause changes
         /// </summary>
-        void OnApplicationFocus(bool hasFocus) {
-            if (!_isMobileInputCreated || !Visible) {
-                return;
-            }
-            SetVisible(hasFocus);
+        void OnApplicationVisibilityChanged() {
+            ApplyNativeVisibility();
+            ApplyFocusOnCreate();
         }
-
-        /// <summary>
-        /// Handler for app focus lost
-        /// </summary>
-        void OnApplicationPause(bool hasPause) {
-            if (!_isMobileInputCreated || !Visible) {
-                return;
-            }
-            SetVisible(!hasPause);
-        }
-#endif
 
         /// <summary>
         /// Current InputField for external access
@@ -371,7 +374,7 @@ namespace UMI {
                 return (_inputObject == null) ? string.Empty : _inputObject.text;
             }
             set {
-                if (!_isMobileInputCreated) {
+                if (_initializationState != InitializationState.Ready) {
                     _textOnCreate = value;
                     return;
                 }
@@ -383,15 +386,77 @@ namespace UMI {
         /// <summary>
         /// Initialization
         /// </summary>
+        void RequestInitialization() {
+            if (_initializationState != InitializationState.NotStarted || !isActiveAndEnabled) {
+                return;
+            }
+            _initializationState = InitializationState.Scheduled;
+            _initializationCoroutine = StartCoroutine(InitProcess());
+        }
+
+        /// <summary>
+        /// Cancel initialization before CREATE has been sent
+        /// </summary>
+        void CancelScheduledInitialization() {
+            if (_initializationState != InitializationState.Scheduled) {
+                return;
+            }
+            if (_initializationCoroutine != null) {
+                StopCoroutine(_initializationCoroutine);
+            }
+            _initializationCoroutine = null;
+            _initializationState = InitializationState.NotStarted;
+        }
+
+        /// <summary>
+        /// Initialization
+        /// </summary>
         IEnumerator InitProcess() {
-            if (_initStarted) {
+            yield return WaitForEndOfFrame;
+
+            _initializationCoroutine = null;
+            if (_initializationState != InitializationState.Scheduled) {
                 yield break;
             }
-            _initStarted = true;
-            yield return WaitForEndOfFrame;
+            if (!isActiveAndEnabled) {
+                _initializationState = InitializationState.NotStarted;
+                yield break;
+            }
+            if (!IsRegistered) {
+                _initializationCoroutine = StartCoroutine(WaitForRegistration());
+                yield break;
+            }
+            CreateAfterRegistration();
+        }
+
+        /// <summary>
+        /// Wait until base.Start has registered the receiver before CREATE
+        /// </summary>
+        IEnumerator WaitForRegistration() {
+            while (_initializationState == InitializationState.Scheduled && isActiveAndEnabled && !IsRegistered) {
+                yield return null;
+            }
+            _initializationCoroutine = null;
+            if (_initializationState != InitializationState.Scheduled) {
+                yield break;
+            }
+            if (!isActiveAndEnabled) {
+                _initializationState = InitializationState.NotStarted;
+                yield break;
+            }
+            CreateAfterRegistration();
+        }
+
+        /// <summary>
+        /// Prepare and send CREATE exactly once
+        /// </summary>
+        void CreateAfterRegistration() {
             PrepareNativeEdit();
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-            CreateNativeEdit();
+            var initialVisibility = ShouldShowNative();
+            _initializationState = InitializationState.WaitingForReady;
+            Visible = initialVisibility;
+            CreateNativeEdit(initialVisibility);
             var data = this._inputObjectText.text.Trim();
             if (data.Length == 1) {
                 var category = Char.GetUnicodeCategory(data[0]);
@@ -402,6 +467,10 @@ namespace UMI {
             _inputObject.placeholder.gameObject.SetActive(false);
             _inputObject.enabled = false;
             _inputObjectText.enabled = false;
+#else
+            _initializationState = InitializationState.Ready;
+            ApplyNativeVisibility(true);
+            ApplyFocusOnCreate();
 #endif
         }
 
@@ -414,7 +483,7 @@ namespace UMI {
 #if UNITY_ANDROID && !UNITY_EDITOR
             UpdateForceKeyeventForAndroid();
 #endif
-            if (_inputObject != null && _isMobileInputCreated) {
+            if (_inputObject != null && _initializationState == InitializationState.Ready) {
 #if !UNITY_EDITOR
                 var touchCount = Input.touchCount;
                 if (touchCount > 0) {
@@ -473,8 +542,11 @@ namespace UMI {
             var yMax = float.NegativeInfinity;
             for (var i = 0; i < 4; i++) {
                 Vector3 coords;
-                if (rect.GetComponentInParent<Canvas>().renderMode == RenderMode.ScreenSpaceOverlay) {
+                var canvas = rect.GetComponentInParent<Canvas>();
+                if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) {
                     coords = corners[i];
+                } else if (canvas.renderMode == RenderMode.ScreenSpaceCamera) {
+                    coords = canvas.worldCamera.WorldToScreenPoint (corners[i]);
                 } else {
                     coords = RectTransformUtility.WorldToScreenPoint(Camera.main, corners[i]);
                 }
@@ -522,6 +594,15 @@ namespace UMI {
         /// </summary>
         /// <param name="data">JSON</param>
         public override void Send(JsonObject data) {
+            string msg = data["msg"];
+            if (msg.Equals(READY)) {
+                Ready();
+                return;
+            }
+            if (!isActiveAndEnabled) {
+                ProcessData(data);
+                return;
+            }
             StartCoroutine(SendDataProcess(data));
         }
 
@@ -529,7 +610,7 @@ namespace UMI {
         /// Remove focus, keyboard when app lose focus
         /// </summary>
         public override void Hide() {
-            if (_inputObject != null && _isMobileInputCreated) {
+            if (_inputObject != null && _initializationState == InitializationState.Ready) {
                 SetFocus(false);
             }
         }
@@ -540,12 +621,17 @@ namespace UMI {
         /// <param name="data">JSON</param>
         IEnumerator SendDataProcess(JsonObject data) {
             yield return WaitForEndOfFrame;
+            ProcessData(data);
+        }
+
+        /// <summary>
+        /// Process a native callback on Unity's main thread
+        /// </summary>
+        void ProcessData(JsonObject data) {
             string msg = data["msg"];
             if (msg.Equals(TEXT_CHANGE)) {
                 string text = data["text"];
                 OnTextChange(text);
-            } else if (msg.Equals(READY)) {
-                Ready();
             } else if (msg.Equals(ON_FOCUS)) {
                 OnFocusChanged(true);
             } else if (msg.Equals(ON_UNFOCUS)) {
@@ -571,7 +657,7 @@ namespace UMI {
         /// <summary>
         /// Create native input field
         /// </summary>
-        void CreateNativeEdit() {
+        void CreateNativeEdit(bool isVisible) {
             var rect = GetScreenRectFromRectTransform(_inputObjectText.rectTransform);
             var data = new JsonObject();
             data["msg"] = CREATE;
@@ -612,6 +698,7 @@ namespace UMI {
             data["input_type"] = _config.InputType;
             data["keyboard_type"] = _config.KeyboardType;
             data["keyboard_language"] = KeyboardLanguage;
+            data["is_visible"] = isVisible;
             data["return_key_type"] = ReturnKey switch {
                 ReturnKeyType.Next => (JsonNode)"Next",
                 ReturnKeyType.Done => (JsonNode)"Done",
@@ -627,16 +714,15 @@ namespace UMI {
         /// New field successfully added
         /// </summary>
         void Ready() {
-            _isMobileInputCreated = true;
+            if (_initializationState != InitializationState.WaitingForReady) {
+                return;
+            }
+            _initializationState = InitializationState.Ready;
             if (!string.IsNullOrEmpty(_textOnCreate)) {
                 Text = _textOnCreate;
             }
-            if (!_isVisibleOnCreate) {
-                SetVisible(false);
-            }
-            if (_isFocusOnCreate) {
-                SetFocus(true);
-            }
+            ApplyNativeVisibility(true);
+            ApplyFocusOnCreate();
         }
 
         /// <summary>
@@ -737,10 +823,15 @@ namespace UMI {
         /// Remove field
         /// </summary>
         void RemoveNative() {
-            _isMobileInputCreated = false;
-            var data = new JsonObject();
-            data["msg"] = REMOVE;
-            Execute(data);
+            var removeRequired = _initializationState == InitializationState.WaitingForReady ||
+                _initializationState == InitializationState.Ready;
+            _initializationState = InitializationState.Destroyed;
+            Visible = false;
+            if (removeRequired) {
+                var data = new JsonObject();
+                data["msg"] = REMOVE;
+                Execute(data);
+            }
         }
 
         /// <summary>
@@ -749,7 +840,7 @@ namespace UMI {
         /// <param name="inputRect">RectTransform</param>
         public void SetRectNative(RectTransform inputRect) {
             var rect = GetScreenRectFromRectTransform(inputRect);
-            if (_inputObject == null || !_isMobileInputCreated || _lastRect == rect) {
+            if (_inputObject == null || _initializationState != InitializationState.Ready || _lastRect == rect) {
                 return;
             }
             _lastRect = rect;
@@ -768,8 +859,32 @@ namespace UMI {
         /// <param name="isFocus">true | false</param>
         public void SetFocus(bool isFocus) {
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
-            if (!_isMobileInputCreated) {
+            if (_initializationState != InitializationState.Ready || (isFocus && !ShouldShowNative())) {
                 _isFocusOnCreate = isFocus;
+                return;
+            }
+            _isFocusOnCreate = false;
+            SetFocusNative(isFocus);
+#else
+            if (gameObject.activeInHierarchy) {
+                if (isFocus) {
+                    _inputObject.ActivateInputField();
+                } else {
+                    _inputObject.DeactivateInputField();
+                }
+                _isFocusOnCreate = false;
+            } else {
+                _isFocusOnCreate = isFocus;
+            }
+#endif
+        }
+
+        /// <summary>
+        /// Apply focus directly without changing a deferred focus request
+        /// </summary>
+        void SetFocusNative(bool isFocus) {
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+            if (_initializationState != InitializationState.Ready) {
                 return;
             }
             var data = new JsonObject();
@@ -783,20 +898,41 @@ namespace UMI {
                 } else {
                     _inputObject.DeactivateInputField();
                 }
-            } else {
-                _isFocusOnCreate = isFocus;
             }
 #endif
-
         }
 
         /// <summary>
-        /// Set field visible
+        /// Apply deferred focus once the native input can safely receive it
         /// </summary>
-        /// <param name="isVisible">true | false</param>
-        public void SetVisible(bool isVisible) {
-            if (!_isMobileInputCreated) {
-                _isVisibleOnCreate = isVisible;
+        void ApplyFocusOnCreate() {
+            if (!_isFocusOnCreate || _initializationState != InitializationState.Ready || !ShouldShowNative()) {
+                return;
+            }
+            _isFocusOnCreate = false;
+            SetFocusNative(true);
+        }
+
+        /// <summary>
+        /// Check the effective visibility without changing the public request
+        /// </summary>
+        bool ShouldShowNative() {
+            return _requestedVisible &&
+                isActiveAndEnabled &&
+                MobileInput.CanShowInputs &&
+                _initializationState != InitializationState.Destroyed;
+        }
+
+        /// <summary>
+        /// Apply the effective visibility to a native input that has been created
+        /// </summary>
+        void ApplyNativeVisibility(bool force = false) {
+            if (_initializationState != InitializationState.WaitingForReady &&
+                _initializationState != InitializationState.Ready) {
+                return;
+            }
+            var isVisible = ShouldShowNative();
+            if (!force && Visible == isVisible) {
                 return;
             }
             var data = new JsonObject();
@@ -805,6 +941,16 @@ namespace UMI {
             Execute(data);
             Visible = isVisible;
             _lastRect = new Rect();
+        }
+
+        /// <summary>
+        /// Set requested field visibility
+        /// </summary>
+        /// <param name="isVisible">true | false</param>
+        public void SetVisible(bool isVisible) {
+            _requestedVisible = isVisible;
+            ApplyNativeVisibility();
+            ApplyFocusOnCreate();
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR

@@ -124,13 +124,21 @@ public class MobileInput {
             JSONObject json = new JSONObject(data);
             String msg = json.getString("msg");
             if (msg.equals(CREATE)) {
+                if (mobileInputList.get(id) != null) {
+                    return;
+                }
                 MobileInput input = new MobileInput(Plugin.layout);
-                input.Create(id, json);
                 mobileInputList.append(id, input);
+                input.Create(id, json);
             } else {
                 MobileInput input = mobileInputList.get(id);
                 if (input != null) {
-                    input.processData(json);
+                    if (msg.equals(REMOVE)) {
+                        input.Remove();
+                        mobileInputList.remove(id);
+                    } else {
+                        input.processData(json);
+                    }
                 }
             }
         } catch (JSONException e) {
@@ -306,6 +314,7 @@ public class MobileInput {
             String alignment = data.getString("align");
             String customFont = data.getString("font");
             boolean multiline = data.getBoolean("multiline");
+            boolean isVisible = data.optBoolean("is_visible", true);
             caretColor = Color.argb(caretColor_a, caretColor_r, caretColor_g, caretColor_b);
             isCaretChange = data.getBoolean("caret_color");
             edit = new EditText(Plugin.activity.getApplicationContext());
@@ -508,6 +517,8 @@ public class MobileInput {
                 return false;
             });
 
+            edit.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
+            edit.setEnabled(isVisible);
             layout.addView(edit);
             data = new JSONObject();
             try {

@@ -1,6 +1,6 @@
 {
     "name": "com.mopsicus.umi",
-    "version": "2.0.0",
+    "version": "2.0.6",
     "displayName": "UMI",
     "description": "UMI – Unity plugin for Android and iOS, allows to use features of mobile native input fields.",
     "license": "MIT",
